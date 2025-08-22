@@ -3,7 +3,7 @@ import re
 import random
 from yeval.metrics import math_eval
 from yeval.response.math_responses import get_boxed_answer
-from lang_boot.utils import math_eval_with_postprocessing, get_lang_score
+from lang_boot.utils import get_lang_score
 
 from lang_boot.reward_functions.repetition_penalty import repetition_penalty
 
@@ -25,19 +25,12 @@ def compute_score(data_source, solution_str, ground_truth, extra_info=None, use_
 
     task_eval = extra_info["task"].split("/")[0]
     if task_eval == "train_dataset":
-        try:
-            gold = get_boxed_answer(ground_truth)
-            if gold == "None":
-                gold = ground_truth
-        except:
-            gold = ground_truth
-
-        try:
-            ans = get_boxed_answer(solution_str)
-        except:
-            ans = solution_str
-
-        ans_score = math_eval(ans, gold)
+        gold = ground_truth
+        ans = get_boxed_answer(solution_str)
+        if ans == "None":
+            ans_score = 0
+        else:
+            ans_score = math_eval(ans, gold)
     else:
         ans_score = eval_fn[task_eval](solution_str, ground_truth)["accuracy"]
 
@@ -73,6 +66,8 @@ def compute_score(data_source, solution_str, ground_truth, extra_info=None, use_
         "use_penalty": use_penalty,
         "use_random": use_random,
         "gold": ground_truth,
+        "ans": ans,
+        "parsable": 1 if ans else 0,
     }
 
 def compute_score_reward_acc(data_source, solution_str, ground_truth, extra_info):
