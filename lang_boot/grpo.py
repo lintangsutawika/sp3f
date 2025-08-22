@@ -18,57 +18,42 @@ FSDP PPO Trainer with Ray-based single controller.
 This trainer supports model-agonistic model initialization with huggingface
 """
 
-import json
 import os
 import uuid
-from collections import defaultdict
 from copy import deepcopy
-from dataclasses import dataclass, field
-from enum import Enum
 from pprint import pprint
-from typing import Optional, Type
 
-import re
 import random
 import numpy as np
-import ray
+import pandas as pd
 import torch
-from omegaconf import OmegaConf, open_dict
-from torch.utils.data import Dataset, Sampler
-from torchdata.stateful_dataloader import StatefulDataLoader
+
 from tqdm import tqdm
 
 from verl import DataProto
-from verl.protocol import pad_dataproto_to_divisor, unpad_dataproto
-from verl.single_controller.base import Worker
-from verl.single_controller.ray import RayClassWithInitArgs, RayResourcePool, RayWorkerGroup
-from verl.single_controller.ray.base import create_colocated_worker_cls
 from verl.trainer.ppo.metric_utils import (
     compute_data_metrics,
     compute_throughout_metrics,
     compute_timing_metrics,
-    process_validation_metrics,
 )
-from verl.trainer.ppo.reward import compute_reward, compute_reward_async
-from verl.utils.checkpoint.checkpoint_manager import find_latest_ckpt_path, should_save_ckpt_esi
+from verl.trainer.ppo.reward import compute_reward
+from verl.utils.checkpoint.checkpoint_manager import should_save_ckpt_esi
 from verl.utils.debug import marked_timer
 from verl.utils.metric import (
     reduce_metrics,
 )
 from verl.utils.model import compute_position_id_with_mask
-from verl.utils.seqlen_balancing import get_seqlen_balanced_partitions, log_seqlen_unbalance
-from verl.utils.torch_functional import masked_mean, postprocess_data
-from verl.utils.tracking import ValidationGenerationsLogger
+from verl.utils.torch_functional import postprocess_data
 from verl.trainer.ppo.core_algos import AdvantageEstimator, agg_loss
-from verl.trainer.ppo.ray_trainer import ResourcePoolManager, Role
 
 from verl.trainer.ppo.ray_trainer import (
-    # AdvantageEstimator,
     RayPPOTrainer,
     apply_kl_penalty,
     compute_advantage,
     compute_response_mask,
 )
+
+from yeval.response.math_responses import get_boxed_answer
 
 LANGUAGE_CODE = {
     "en": "English",
@@ -97,10 +82,6 @@ If the response is in English, output "en". \
 If the response is in Chinese, output "zh". \
 """
 
-
-def extract_boxed_content(text):
-    match = list(re.finditer(r'\\boxed\{([^}]+)\}', text))
-    return match[-1].group(1) if match else None
 
 class CustomRayPPOTrainer(RayPPOTrainer):
     def _save_checkpoint(self):
@@ -155,6 +136,11 @@ class RayGRPOTrainer(CustomRayPPOTrainer):
         check_for_boxed_content=False
     ):
         src_max_length = data.batch["attention_mask"].shape[-1]
+        # the maximum length is actually determined by the reward model itself
+        max_length = self.config.get("max_length", src_max_length)
+        if max_length is None:
+            max_length = src_max_length
+        # print(f"max_length: {max_length}")
 
         system_message += "\nThink step by step before answering and output your answer in \\boxed{}."
         range_bs = list(range(data.batch.batch_size[0]))
@@ -172,8 +158,8 @@ class RayGRPOTrainer(CustomRayPPOTrainer):
             chat_list = []
             for idx, (i, j) in enumerate(pairwise_idx):
                 # extract raw prompt
-                base_query = data.non_tensor_batch["input_selected"][i]
-                eng_response = data.non_tensor_batch["eng_output_selected"][i]
+                base_query = data.non_tensor_batch["raw_prompt"][i]
+                eng_response = data.non_tensor_batch["solution"][i]
 
                 response_dict = {}
                 for idx_resp, x in zip(["A", "B"],[i, j]):
@@ -189,8 +175,8 @@ class RayGRPOTrainer(CustomRayPPOTrainer):
                     response = response.replace(self.tokenizer.eos_token, "")
 
                     if check_for_boxed_content:
-                        box_content = extract_boxed_content(response)
-                        if box_content is not None:
+                        box_content = get_boxed_answer(response)
+                        if box_content is not "None":
                             response = response.replace(f"\\boxed{{{box_content}}}", box_content)
 
                     response_dict[idx_resp] = response
@@ -215,7 +201,7 @@ class RayGRPOTrainer(CustomRayPPOTrainer):
                 response = response.replace(self.tokenizer.eos_token, "")
 
                 if check_for_boxed_content:
-                    box_content = extract_boxed_content(response)
+                    box_content = get_boxed_answer(response)
                     if box_content is not None:
                         response = response.replace(f"\\boxed{{{box_content}}}", box_content)
 
@@ -229,12 +215,6 @@ class RayGRPOTrainer(CustomRayPPOTrainer):
         for chat in chat_list:
 
             prompt_with_chat_template = self.tokenizer.apply_chat_template(chat, add_generation_prompt=True, tokenize=False)
-
-
-            # the maximum length is actually determined by the reward model itself
-            max_length = self.config.get("max_length", src_max_length)
-            if max_length is None:
-                max_length = src_max_length
 
             model_inputs = self.tokenizer(prompt_with_chat_template, return_tensors="pt", add_special_tokens=False)
             input_ids, attention_mask = postprocess_data(
@@ -435,7 +415,7 @@ class RayGRPOTrainer(CustomRayPPOTrainer):
                             response_idx = {}
                             _idx = 0
                             for (i, j), response in zip(pairwise_idx, judge_responses):
-                                winning_response = extract_boxed_content(response)
+                                winning_response = get_boxed_answer(response)
                                 if winning_response == "A":
                                     score = 1.0
                                 elif winning_response == "B":
@@ -447,7 +427,20 @@ class RayGRPOTrainer(CustomRayPPOTrainer):
                                 else:
                                     response_idx[i] = [score]
 
-                            response_scores = torch.tensor([response_idx[i] for i in range(len(response_idx))], dtype=torch.float32).mean(dim=-1)
+                            response_df = pd.DataFrame(
+                                data={
+                                    "responses": judge_responses,
+                                }
+                            )
+
+                            response_df.to_json(
+                                os.path.join(self.config.trainer.default_local_dir, f"judge_responses_{self.global_steps}.json"),
+                                orient="records",
+                                lines=True,
+                            )
+                            # response_scores = torch.tensor([response_idx[i] for i in range(len(response_idx))], dtype=torch.float32).mean(dim=-1)
+                            response_scores = torch.tensor([response_idx[i] for i in range(len(response_idx))], dtype=torch.float32).sum(dim=-1)
+                            # np.save(os.path.join(self.config.trainer.default_local_dir, f"judge_scores_{self.global_steps}.npy"), torch.tensor([response_idx[i] for i in range(len(response_idx))], dtype=torch.float32).cpu().numpy())
                             token_level_scores = _expand_to_token_level(batch, response_scores)
                             reward_tensor = token_level_scores.to("cpu")
                         else:
@@ -468,7 +461,7 @@ class RayGRPOTrainer(CustomRayPPOTrainer):
 
                             response_list = []
                             for response in judge_responses:
-                                lang_response = extract_boxed_content(response)
+                                lang_response = get_boxed_answer(response)
                                 if lang_response is None:
                                     lang_response = response.strip()
                                 score = 1.0 if lang_response == tgt_lang_code else 0
