@@ -20,7 +20,6 @@ from lang_boot.utils import math_eval_with_postprocessing
 path = os.path.dirname(__file__)
 
 class MGSMTask(YevalTask):
-    system_message="Think about it step by step and give your answer at the end in \\boxed{}."
     data_path="juletxara/mgsm"
     input_text=lambda x: x["question"]
     output_text=lambda x: x["answer_number"]

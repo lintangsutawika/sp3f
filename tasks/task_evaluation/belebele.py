@@ -6,6 +6,8 @@ from yeval.task import register_task, YevalTask
 from yeval.log.usage import log_logprob
 from yeval.response.math_responses import get_boxed_answer
 
+from lang_boot.utils import extract_text_content
+
 path = os.path.dirname(__file__)
 
 def input_text(x):
@@ -21,7 +23,8 @@ def eval_with_postprocessing(x, y):
     gold_letter, gold_answer = y.split("::")
 
     ans_score = 0.0
-    ans = get_boxed_answer(x).lower()
+    ans = get_boxed_answer(x)
+    ans = extract_text_content(ans).lower()
     if ans.lower() == gold_letter.lower():
         ans_score = 1.0
     elif ans.lower() == gold_answer.lower():
@@ -31,7 +34,6 @@ def eval_with_postprocessing(x, y):
     return ans_score
 
 class BelebeleTask(YevalTask):
-    system_message="Think about it step by step and give your answer at the end in \\boxed{}."
     data_path="facebook/belebele"
     input_text=input_text
     output_text=output_text

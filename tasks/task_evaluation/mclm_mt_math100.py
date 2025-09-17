@@ -20,7 +20,6 @@ from lang_boot.utils import math_eval_with_postprocessing
 path = os.path.dirname(__file__)
 
 class MT_MATH100Task(YevalTask):
-    system_message="Think about it step by step and give your answer at the end in \\boxed{}."
     data_path="amphora/MCLM"
     data_name="MT-MATH100"
     output_text=lambda x: x["answer"]
