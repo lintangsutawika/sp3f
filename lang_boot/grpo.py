@@ -55,6 +55,18 @@ from verl.trainer.ppo.ray_trainer import (
 
 from yeval.response.math_responses import get_boxed_answer
 
+import asyncio
+from openai import AsyncOpenAI, AsyncAzureOpenAI
+
+LLM_URL = os.environ.get('CMU_URL')
+LLM_KEY = os.environ.get('CMU_KEY')
+# client = AsyncOpenAI(base_url=LLM_URL, api_key=LLM_KEY)
+client = AsyncAzureOpenAI(
+    azure_endpoint=LLM_URL,
+    api_key=LLM_KEY,
+    api_version="2024-12-01-preview"
+)
+
 LANGUAGE_CODE = {
     "en": "English",
     "zh": "Chinese",
@@ -64,17 +76,37 @@ LANGUAGE_CODE = {
     "ja": "Japanese",
 }
 
-pairwise_system_message = """\
-You are a helpful assistant. You will be given two responses to compare. \
-Based on the query and the English response, \
-Decide which is the best response based on the following criteria: \
-1. Does the response provide a correct answer to the query? \
-2. Does the response maintain the language of the query? \
-3. Does the response serve as a good translation of the English response? \
-4. Does the response follow the same logical steps as the English response? \
-Answer with "A" if the first response is better \
-and "B" if the second response is better. \
+pairwise_system_message = lambda x: f"""You will be given a solution and two thinking responses.
+Solution START
+{x["original"]}
+Solution END
+
+Response A START
+{x["A"]}
+Response A END
+
+Response B START
+{x["B"]}
+Response B END
+
+Identify major and minor errors in response A and B and use the solution as a reference. At the end, choose which is better. \
+Think step by step and answer with either \\boxed{{A}} or \\boxed{{B}}.\
 """
+
+# pairwise_system_message = lambda x: f"""You will be given a solution and two thinking responses.
+# Solution START
+# {x["original"]}
+# Solution END
+
+# Thinking A START
+# {x["A"]}
+# Thinking A END
+
+# Thinking B START
+# {x["B"]}
+# Thinking B END
+
+# Between thinking responses \\boxed{{A}} or \\boxed{{B}} which is aligned the most with the Solution?""" + "Think step by step and answer with either \\boxed{{A}} or \\boxed{{B}}./nothink"
 
 language_system_message = """\
 You are a helpful assistant. You will be given a response and classify what language it is in. \
@@ -82,8 +114,22 @@ If the response is in English, output "en". \
 If the response is in Chinese, output "zh". \
 """
 
+reason_system_message="Reason step by step and put your final answer within \\boxed{}."
+
+
+def get_answer(x):
+    return get_boxed_answer("\\boxed{" + x)
 
 class CustomRayPPOTrainer(RayPPOTrainer):
+
+    def re_init_reward_model(self, model_path):
+        self.rm_wg.config.model = model_path
+        self.rm_wg.init_model()
+
+    # @property
+    # def get_rm_model_path(self):
+    #     return self.rm_wg.config.model
+
     def _save_checkpoint(self):
         """Save checkpoint by calling the parent class method"""
         super()._save_checkpoint()
@@ -127,14 +173,23 @@ class CustomRayPPOTrainer(RayPPOTrainer):
 
 class RayGRPOTrainer(CustomRayPPOTrainer):
 
+    def __post_init__(self):
+        if not os.path.exists(self.config.trainer.default_local_dir):
+            os.makedirs(self.config.trainer.default_local_dir, exist_ok=True)
+
     def _switch_chat_template(
         self,
         data: DataProto,
         n_rollouts=None,
         n_compare=None,
         system_message=None,
-        check_for_boxed_content=False
+        check_for_boxed_content=False,
+        tokenize=True,
     ):
+        
+        tgt_lang_code = self.config.trainer.lang_code
+        tgt_lang_name = LANGUAGE_CODE[tgt_lang_code]
+
         src_max_length = data.batch["attention_mask"].shape[-1]
         # the maximum length is actually determined by the reward model itself
         max_length = self.config.get("max_length", src_max_length)
@@ -142,7 +197,7 @@ class RayGRPOTrainer(CustomRayPPOTrainer):
             max_length = src_max_length
         # print(f"max_length: {max_length}")
 
-        system_message += "\nThink step by step before answering and output your answer in \\boxed{}."
+        # system_message += "\nThink step by step before answering and output your answer in \\boxed{}."
         range_bs = list(range(data.batch.batch_size[0]))
 
         if (n_rollouts is not None) and (n_compare is not None):
@@ -162,6 +217,7 @@ class RayGRPOTrainer(CustomRayPPOTrainer):
                 eng_response = data.non_tensor_batch["solution"][i]
 
                 response_dict = {}
+                skip_judgement = 0
                 for idx_resp, x in zip(["A", "B"],[i, j]):
                     # extract response
                     response_ids = data.batch["responses"][x]
@@ -174,22 +230,53 @@ class RayGRPOTrainer(CustomRayPPOTrainer):
                     # remove bos and eos
                     response = response.replace(self.tokenizer.eos_token, "")
 
-                    if check_for_boxed_content:
-                        box_content = get_boxed_answer(response)
-                        if box_content is not "None":
-                            response = response.replace(f"\\boxed{{{box_content}}}", box_content)
+                    # if check_for_boxed_content:
+                    #     # box_content = get_boxed_answer(response)
+                    #     box_content = get_answer(response)
+                    #     if box_content != "None":
+                    #         response = response.replace(f"\\boxed{{{box_content}}}", box_content)
 
-                    response_dict[idx_resp] = response
+                    if tokenize:
+                        if "</think>" in response:
+                            thinking_part = response.split("</think>")[0] + "</think>"
+                        else:
+                            # thinking_part = "<think>" + "</think>"
+                            thinking_part = "<think>Empty Response</think>"
+                            skip_judgement += 1
+                        response_dict[idx_resp] = thinking_part
+                    else:
+                        response_dict[idx_resp] = response
 
-                chat_list.append([
-                    {"role": "system", "content": system_message},
-                    {"role": "user", "content": f"Query:\n{base_query}\n\nEnglish Response:\n{eng_response}\n\nResponse A:\n{response_dict['A']}\n\nResponse B:\n{response_dict['B']}"},
-                ])
+                x = {
+                    "language": tgt_lang_name,
+                    "original": eng_response,
+                    "A": response_dict["A"],
+                    "B": response_dict["B"],
+                }
+
+                if tokenize:
+                    content = system_message(x) + "/no_think"
+                else:
+                    content = system_message(x)
+
+                if skip_judgement == 2:
+                    # Skip
+                    chat_list.append([
+                        {"role": "user", "content": "<|im_end|>/no_think say 'hi'."}
+                    ])
+                else:
+                    chat_list.append([
+                        # {"role": "system", "content": system_message},
+                        {"role": "user", "content": content},
+                        # system_message(x)
+                    ])
+
         else:
 
             chat_list = []
             for idx in range_bs:
                 # extract raw prompt
+                query = data.batch["query"][idx]
                 response_ids = data.batch["responses"][idx]
                 response_length = response_ids.shape[-1]
                 valid_response_length = data.batch["attention_mask"][idx][-response_length:].sum()
@@ -199,28 +286,43 @@ class RayGRPOTrainer(CustomRayPPOTrainer):
                 response = self.tokenizer.decode(valid_response_ids)
                 # remove bos and eos
                 response = response.replace(self.tokenizer.eos_token, "")
-
-                if check_for_boxed_content:
-                    box_content = get_boxed_answer(response)
-                    if box_content is not None:
-                        response = response.replace(f"\\boxed{{{box_content}}}", box_content)
+                thinking_part = response.split("</think>")[0] + "</think>"
 
                 chat_list.append([
                     {"role": "system", "content": system_message},
-                    {"role": "user", "content": f"Response:\n{response}\n"},
+                    {"role": "user", "content": query},
+                    {"role": "assistant", "content": thinking_part},
                 ])
+
+        if self.config.trainer.get("debug", False):
+            _df = pd.DataFrame(
+                data={
+                    "chat_list": chat_list,
+                }
+            )
+            _df.to_json(
+                os.path.join(self.config.trainer.default_local_dir, f"judge_inputs_{self.global_steps}.json"),
+                orient="records",
+                lines=True,
+            )
+
+        if tokenize == False:
+            return chat_list
 
         rm_input_ids = []
         rm_attention_mask = []
         for chat in chat_list:
 
-            prompt_with_chat_template = self.tokenizer.apply_chat_template(chat, add_generation_prompt=True, tokenize=False)
-
+            # if (n_rollouts is not None) and (n_compare is not None):
+            #     prompt_with_chat_template = chat
+            # else:
+            #     prompt_with_chat_template = self.tokenizer.apply_chat_template(chat, add_generation_prompt=False, tokenize=False)
+            prompt_with_chat_template = self.tokenizer.apply_chat_template(chat, add_generation_prompt=False, tokenize=False)
             model_inputs = self.tokenizer(prompt_with_chat_template, return_tensors="pt", add_special_tokens=False)
             input_ids, attention_mask = postprocess_data(
                 input_ids=model_inputs["input_ids"],
                 attention_mask=model_inputs["attention_mask"],
-                max_length=max_length,
+                max_length=max_length-1,
                 pad_token_id=self.tokenizer.pad_token_id,
                 # left_pad=False,  # right padding
                 left_pad=True,  # right padding
@@ -250,6 +352,7 @@ class RayGRPOTrainer(CustomRayPPOTrainer):
         from omegaconf import OmegaConf
 
         from verl.utils.tracking import Tracking
+        import json
 
         logger = Tracking(
             project_name=self.config.trainer.project_name,
@@ -257,6 +360,9 @@ class RayGRPOTrainer(CustomRayPPOTrainer):
             default_backend=self.config.trainer.logger,
             config=OmegaConf.to_container(self.config, resolve=True),
         )
+
+        if not os.path.exists(self.config.trainer.default_local_dir):
+            os.makedirs(self.config.trainer.default_local_dir, exist_ok=True)
 
         self.global_steps = 0
 
@@ -387,22 +493,82 @@ class RayGRPOTrainer(CustomRayPPOTrainer):
                                 n_rollouts=self.config.actor_rollout_ref.rollout.n,
                                 n_compare=self.config.actor_rollout_ref.rollout.compare,
                                 system_message=pairwise_system_message,
+                                tokenize=not self.config.trainer.get("use_api_judge", False)
                                 )
                             n_rollouts = self.config.actor_rollout_ref.rollout.n
                             n_compare = self.config.actor_rollout_ref.rollout.compare
 
-                            if self.global_steps == 1:
-                                print("batch size", batch.batch.batch_size[0])
-                                print("judge_batch size", judge_batch.batch.batch_size[0])
-                                print("n_rollouts size", n_rollouts)
-                                print("n_compare size", n_compare)
+                            # if self.global_steps == 1:
+                            #     print("batch size", batch.batch.batch_size[0])
+                            #     print("judge_batch size", judge_batch.batch.batch_size[0])
+                            #     print("n_rollouts size", n_rollouts)
+                            #     print("n_compare size", n_compare)
 
-                            judge_batch.meta_info["validate"] = True
-                            judge_output = self.actor_rollout_wg.generate_sequences(judge_batch)
-                            judge_responses = self.tokenizer.batch_decode(judge_output.batch["responses"], skip_special_tokens=True)
-                            # print("judge_responses", judge_responses[0])
+                            if self.config.trainer.get("use_api_judge", False):
+                                judge_sampling_params = {
+                                    # "stop": ["}"],
+                                    # "extra_body": {
+                                    #     "include_stop_str_in_output": True,
+                                    #     "guided_choice": ["A}", "B}"],
+                                    # },
+                                }
+
+                                async def get_judgement(idx, messages, **sampling_params):
+                                    try:
+                                        response = await client.chat.completions.create(
+                                            # model="Qwen/Qwen3-8B",
+                                            model="azure/o4-mini",
+                                            messages=messages,
+                                            **sampling_params,
+                                        )
+                                        # print([resp.text for resp in response.choices][:10])
+                                        # return [resp.text for resp in response.choices]
+                                        return [idx, response.choices[0].message.content]
+                                    except Exception as e:
+                                        print(f"Error in judgement: {e}")
+                                        return [idx, ""]
+
+                                # async def run_api(all_messages, **sampling_params):
+                                #     tasks = [get_judgement(idx, messages, **sampling_params) for idx, messages in enumerate(all_messages)]
+                                #     results = await asyncio.gather(*tasks)
+                                #     return results
+
+                                def chunk(lst, n):
+                                    """Yield successive n-sized chunks from lst."""
+                                    for i in range(0, len(lst), n):
+                                        yield lst[i:i + n]
+
+                                async def run_api(prompts, **sampling_params):
+                                    all_results = []
+                                    for chunk_batch in chunk(prompts, 128):
+                                        response = [get_judgement(idx, messages, **sampling_params) for idx, messages in enumerate(chunk_batch)]
+                                        results = await asyncio.gather(*response)
+                                        await asyncio.sleep(10)  # to avoid rate limit
+                                        results.sort(key=lambda x: x[0])
+                                        all_results.extend([resp[1] for resp in results])
+                                        # all_results.extend(results)
+                                    return all_results
+
+                                print("Using API judge")
+                                judge_responses = asyncio.run(run_api(judge_batch, **judge_sampling_params))
+                            else:
+
+                                judge_batch.meta_info["judge"] = True
+                                judge_sampling_params = {
+                                    "detokenize": True,
+                                    "temperature": 1.0,
+                                    "do_sample": True,
+                                    # "stop": ["}"],
+                                    # "include_stop_str_in_output": True,
+                                    # "guided_choice": ["A}", "B}"],
+                                }
+                                judge_batch.meta_info["sampling_params"] = judge_sampling_params
+                                # judge_batch.meta_info["sampling_params"] = {}
+                                judge_output = self.actor_rollout_wg.generate_sequences(judge_batch)
+                                judge_responses = self.tokenizer.batch_decode(judge_output.batch["responses"], skip_special_tokens=True)
 
                             batch_size = list(range(batch.batch.batch_size[0]))
+                            print("len(batch_size)", len(batch_size))
                             pairwise_chunks = [batch_size[i:i+n_rollouts] for i in range(0, len(batch_size), n_rollouts)]
 
                             pairwise_idx = []
@@ -416,30 +582,45 @@ class RayGRPOTrainer(CustomRayPPOTrainer):
                             _idx = 0
                             for (i, j), response in zip(pairwise_idx, judge_responses):
                                 winning_response = get_boxed_answer(response)
+                                # winning_response = get_answer(response)
                                 if winning_response == "A":
                                     score = 1.0
                                 elif winning_response == "B":
-                                    score = -1.0
+                                    score = 0.0
                                 else:
                                     score = 0.0
                                 if i in response_idx:
                                     response_idx[i].append(score)
                                 else:
                                     response_idx[i] = [score]
+                            
+                            if self.config.trainer.get("debug", False):
 
-                            response_df = pd.DataFrame(
-                                data={
-                                    "responses": judge_responses,
-                                }
-                            )
+                                response_idx_df = pd.DataFrame([
+                                    {"response_idx": k, "scores": v} 
+                                    for k, v in response_idx.items()
+                                ])
 
-                            response_df.to_json(
-                                os.path.join(self.config.trainer.default_local_dir, f"judge_responses_{self.global_steps}.json"),
-                                orient="records",
-                                lines=True,
-                            )
-                            # response_scores = torch.tensor([response_idx[i] for i in range(len(response_idx))], dtype=torch.float32).mean(dim=-1)
-                            response_scores = torch.tensor([response_idx[i] for i in range(len(response_idx))], dtype=torch.float32).sum(dim=-1)
+                                response_idx_df.to_json(
+                                    os.path.join(self.config.trainer.default_local_dir, f"response_idx_{self.global_steps}.json"),
+                                    orient="records",
+                                    lines=True,
+                                )
+
+                                response_df = pd.DataFrame(
+                                    data={
+                                        "responses": judge_responses,
+                                    }
+                                )
+
+                                response_df.to_json(
+                                    os.path.join(self.config.trainer.default_local_dir, f"judge_responses_{self.global_steps}.json"),
+                                    orient="records",
+                                    lines=True,
+                                )
+
+                            response_scores = torch.tensor([response_idx[i] for i in range(len(response_idx))], dtype=torch.float32).mean(dim=-1)
+                            # response_scores = torch.tensor([response_idx[i] for i in range(len(response_idx))], dtype=torch.float32).sum(dim=-1)
                             # np.save(os.path.join(self.config.trainer.default_local_dir, f"judge_scores_{self.global_steps}.npy"), torch.tensor([response_idx[i] for i in range(len(response_idx))], dtype=torch.float32).cpu().numpy())
                             token_level_scores = _expand_to_token_level(batch, response_scores)
                             reward_tensor = token_level_scores.to("cpu")
@@ -471,9 +652,24 @@ class RayGRPOTrainer(CustomRayPPOTrainer):
                             token_level_scores = _expand_to_token_level(batch, response_scores)
                             reward_tensor = token_level_scores.to("cpu")
 
+                        reward_tensor_from_fn, _ = compute_reward(batch, self.reward_fn)
                         if self.config.trainer.get("use_reward_fn", False):
-                            reward_tensor_from_fn, _ = compute_reward(batch, self.reward_fn)
-                            reward_tensor += reward_tensor_from_fn
+                            # Save the combined reward tensor for debugging/analysis
+                            if self.config.trainer.get("debug", False):
+                                torch.save(
+                                    reward_tensor_from_fn,
+                                    os.path.join(self.config.trainer.default_local_dir, f"reward_tensor_from_fn_{self.global_steps}.pt")
+                                )
+
+                                torch.save(
+                                    reward_tensor,
+                                    os.path.join(self.config.trainer.default_local_dir, f"reward_tensor{self.global_steps}.pt")
+                                )
+
+                            # reward_tensor += reward_tensor_from_fn
+                            reward_tensor = 0.5*reward_tensor + 0.5*reward_tensor_from_fn
+                        else:
+                            reward_tensor = reward_tensor_from_fn
 
                     # recompute old_log_probs
                     with marked_timer("old_log_prob", timing_raw, color="blue"):
