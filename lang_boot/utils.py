@@ -39,7 +39,12 @@ def math_eval_with_postprocessing(x, y):
     
     return score
 
-def get_lang_score(prediction, lang="id"):
+def get_lang_score(prediction, lang="id", check_en=False, ignore_thinking=True):
+
+    if ignore_thinking:
+        if "<think>" in prediction and "</think>" in prediction:
+            prediction = prediction.split("</think>")[-1]
+
     lang_prob = 0.0
     try:
         total_len = 0
@@ -55,11 +60,19 @@ def get_lang_score(prediction, lang="id"):
             lang_prob = lang_dict[lang]/total_len
         else:
             lang_prob = 0.0
+
+        if "en" in lang_dict:
+            en_lang_prob = lang_dict["en"]/total_len
+        else:
+            en_lang_prob = 0.0
     except Exception as e:
         print(f"Error detecting language: {e}")
         lang_prob = 0.0
 
-    return prediction, lang_prob
+    if check_en:
+        return prediction, lang_prob, en_lang_prob
+    else:
+        return prediction, lang_prob
 
 def highest_loglikelihood(dataset):
 
@@ -99,3 +112,7 @@ def math_eval_with_postprocessing(x, y):
     x = clean(x)
     
     return math_eval(x, y)
+
+def extract_text_content(text):
+    match = re.search(r'\\text\{([^}]+)\}', text)
+    return match.group(1) if match else text
