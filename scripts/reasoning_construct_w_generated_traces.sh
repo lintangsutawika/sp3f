@@ -13,18 +13,20 @@
 
 . ./lang_boot/config/.env
 
-LANG="de"
-LANG="fr"
-LANG="es"
-LANG="ru"
-LANG="zh"
-LANG="ja"
-LANG="th"
-LANG="te"
-LANG="bn"
-LANG="sw"
+# LANG="de"
+# LANG="fr"
+# LANG="es"
+# LANG="ru"
+# LANG="zh"
+# LANG="ja"
+# LANG="th"
+# LANG="te"
+# LANG="bn"
+# LANG="sw"
 
 # for LANG in de es ja id
+# for LANG in de fr es bn sw ja zh id
+# for LANG in es sw ja id
 # do
 # bash lang_boot/scripts/reasoning_construct_w_generated_traces.sh \
 #     gsm8k_train \
@@ -39,11 +41,10 @@ DATA_PATH=$3
 MAX_SAMPLES=$4
 
 python lang_boot/lang_boot/construct.py \
-    --query_path ${DATA_PATH}/raw_traces/${TASK}:${LANG}:translated:queries/ \
-    --response_path ${DATA_PATH}/raw_traces/${TASK}:${LANG}:generated:traces/ \
-    --eng_response_path ${DATA_PATH}/raw_traces/${TASK}:en:generated:traces/ \
-    --output_path ${DATA_PATH}/prep_traces/${TASK}:${LANG}:generated:${MAX_SAMPLES}/ \
-    --max_samples ${MAX_SAMPLES} \
-    --lang_code ${LANG} \
+    --response generated \
+    --task ${TASK} \
+    --lang ${LANG} \
     --use_lang \
-    --use_accuracy
+    --use_accuracy \
+    --max_samples ${MAX_SAMPLES} \
+    --data_path ${DATA_PATH}

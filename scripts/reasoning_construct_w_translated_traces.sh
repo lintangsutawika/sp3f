@@ -6,23 +6,23 @@
 #SBATCH --gres=gpu:L40:1
 #SBATCH --nodes=1
 #SBATCH --time=2-00:00:00
-#SBATCH --mem=512G
+#SBATCH --mem=64G
 #SBATCH --cpus-per-task=32
 #SBATCH --ntasks-per-node=1
 #SBATCH --overcommit
 
 . ./lang_boot/config/.env
 
-LANG="de"
-LANG="fr"
-LANG="es"
-LANG="ru"
-LANG="zh"
-LANG="ja"
-LANG="th"
-LANG="te"
-LANG="bn"
-LANG="sw"
+# LANG="de"
+# LANG="fr"
+# LANG="es"
+# LANG="ru"
+# LANG="zh"
+# LANG="ja"
+# LANG="th"
+# LANG="te"
+# LANG="bn"
+# LANG="sw"
 
 # for LANG in de es ja id
 # do
@@ -39,11 +39,10 @@ DATA_PATH=$3
 MAX_SAMPLES=$4
 
 python lang_boot/lang_boot/construct.py \
-    --query_path ${DATA_PATH}/raw_traces/${TASK}:${LANG}:translated:queries/ \
-    --response_path ${DATA_PATH}/raw_traces/${TASK}:${LANG}:generated:traces/ \
-    --eng_response_path ${DATA_PATH}/raw_traces/${TASK}:en:generated:traces/ \
-    --output_path ${DATA_PATH}/prep_traces/${TASK}:${LANG}:translated:${MAX_SAMPLES}/ \
-    --max_samples ${MAX_SAMPLES} \
-    --lang_code ${LANG} \
+    --response translated \
+    --task ${TASK} \
+    --lang ${LANG} \
     --use_lang \
-    --use_accuracy
+    --use_accuracy \
+    --max_samples ${MAX_SAMPLES} \
+    --data_path ${DATA_PATH}

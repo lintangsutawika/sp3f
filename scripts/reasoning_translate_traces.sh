@@ -3,7 +3,7 @@
 #SBATCH --output=logs/%j.out
 #SBATCH --error=logs/%j.out
 #SBATCH --partition=preempt
-#SBATCH --gres=gpu:L40S:1
+#SBATCH --gres=gpu:A6000:1
 #SBATCH --nodes=1
 #SBATCH --time=2-00:00:00
 #SBATCH --mem=512G
@@ -11,34 +11,40 @@
 #SBATCH --ntasks-per-node=1
 #SBATCH --overcommit
 
-# Example usage:
-# for LANG in de fr es ru th te bn sw ja zh id
-# for LANG in de es ja id
-# do
-# PORT=$(( $RANDOM % (65535 - 1024 + 1) + 1024 ))
+. ./lang_boot/config/.sft_env
+export VLLM_USE_V1=0
+
+while getopts ":m:l:t:r:o:p:w:x:y:" opt; do
+  case ${opt} in
+    m ) MODEL=$OPTARG;;
+    x ) MODEL_PATH=$OPTARG;;
+    y ) DATA_PATH=$OPTARG;;
+    l ) LANGUAGE=$OPTARG;;
+    t ) TASK=$OPTARG;;
+    r ) PORT=$OPTARG;;
+    o ) OTHER_ARGS=$OPTARG;;
+    p ) PP_SIZE=$OPTARG;;
+    w ) TP_SIZE=$OPTARG;;
+    # \? ) echo "Usage: cmd [-u] [-p]";;
+  esac
+done
+
 # sbatch lang_boot/scripts/reasoning_translate_traces.sh \
-#     Qwen/Qwen2.5-7B-Instruct \
-#     math_train \
-#     ${LANG} \
-#     data/ \
-#     ${PORT}
-# done
+#     -m Qwen/Qwen2.5-7B \
+#     -l ${LANGUAGE} \
+#     -t deepscaler_train \
+#     -y /data/user_data/lsutawik/lbr-language_bootstrap_reasoning/data/Qwen-Qwen2.5-7B-deepscaler_en/ \
+#     -x /data/user_data/lsutawik/lbr-language_bootstrap_reasoning/ -o "--n_samples 1000"
 
-. ./lang_boot/config/.env
-
-MODEL=$1
-TASK=$2
-LANG=$3
-DATA_PATH=$4
-PORT="${5:-8000}"
-OTHER_ARGS=$6
-PP_SIZE="${7:-1}"
-TP_SIZE="${8:-1}"
+RANDOM_PORT=$(( $RANDOM % (65535 - 1024 + 1) + 1024 ))
+PORT="${PORT:-$RANDOM_PORT}"
+PP_SIZE="${PP_SIZE:-1}"
+TP_SIZE="${TP_SIZE:-1}"
 
 MODEL_ALIAS=$(echo $MODEL | sed 's/\//-/g')
-DATA_DIR="${DATA_PATH}/${MODEL_ALIAS}/raw_traces/${TASK}:en:generated:traces/output.jsonl"
+DATA_DIR="${DATA_PATH}raw_traces/${TASK}+en+generated+traces/output.jsonl"
 
-MAX_TOKEN=4096
+MAX_TOKEN=8192
 vllm serve $MODEL \
     --port ${PORT} \
     --max_model_len ${MAX_TOKEN} \
@@ -48,14 +54,14 @@ vllm serve $MODEL \
 
 yeval \
     --model $MODEL \
-    --task json_highest_log_${TASK}t//${LANG}_translate \
+    --task json_highest_log_${TASK}t//${LANGUAGE}_translate \
     --include_path lang_boot/tasks/ \
     --data_kwargs "{'data_files': '${DATA_DIR}'}" \
     --api_base "http://localhost:${PORT}/v1" \
-    --run_name $TASK:$LANG:translated:traces \
-    --sample_args n=16,temperature=1.0,logprobs=True \
+    --run_name $TASK+$LANGUAGE+translated+traces \
+    --sample_args n=4,temperature=1.0,logprobs=True \
     --trust_remote_code \
-    --output_path data/$MODEL_ALIAS/raw_traces/ $OTHER_ARGS
+    --output_path ${MODEL_PATH}data/$MODEL_ALIAS/raw_traces/ $OTHER_ARGS
 
 pkill vllm
 sleep 2m

@@ -13,29 +13,43 @@
 
 # Example usage:
 # for LANG in de fr es ru th te bn sw ja zh id
-# for LANG in de es ja id
+# for LANG in de fr es ru th te bn sw zh
+# for LANG in ja id
 # do
-# PORT=$(( $RANDOM % (65535 - 1024 + 1) + 1024 ))
-# sbatch lang_boot/scripts/reasoning_translate_queries.sh Qwen/Qwen2.5-7B-Instruct \
-#     math_train \
+
+# sbatch lang_boot/scripts/reasoning_translate_queries.sh -m Qwen/Qwen2.5-7B \
+#     -t deepscaler_train -l id -o "--overwrite"
 #     ${LANG} \
 #     ${PORT}
 # done
 
 . ./lang_boot/config/.sft_env
+export VLLM_USE_V1=0
 
-MODEL=$1
-TASK=$2
-LANG=$3
-PORT="${4:-8000}"
-OTHER_ARGS=$5
-PP_SIZE="${6:-1}"
-TP_SIZE="${7:-1}"
+while getopts ":m:l:t:r:o:p:w:x:y:" opt; do
+  case ${opt} in
+    m ) MODEL=$OPTARG;;
+    x ) MODEL_PATH=$OPTARG;;
+    y ) DATA_PATH=$OPTARG;;
+    l ) LANGUAGE=$OPTARG;;
+    t ) TASK=$OPTARG;;
+    r ) PORT=$OPTARG;;
+    o ) OTHER_ARGS=$OPTARG;;
+    p ) PP_SIZE=$OPTARG;;
+    w ) TP_SIZE=$OPTARG;;
+    # \? ) echo "Usage: cmd [-u] [-p]";;
+  esac
+done
+
+RANDOM_PORT=$(( $RANDOM % (65535 - 1024 + 1) + 1024 ))
+PORT="${PORT:-$RANDOM_PORT}"
+PP_SIZE="${PP_SIZE:-1}"
+TP_SIZE="${TP_SIZE:-1}"
 
 MODEL_ALIAS=$(echo $MODEL | sed 's/\//-/g')
 
-MAX_TOKEN=2048
-vllm serve $MODEL \
+MAX_TOKEN=42048
+vllm serve ${MODEL_PATH}${MODEL} \
     --port ${PORT} \
     --max_model_len ${MAX_TOKEN} \
     --pipeline_parallel_size ${PP_SIZE} \
@@ -43,14 +57,14 @@ vllm serve $MODEL \
     --distributed-executor-backend mp > ${TMPDIR}vllm.txt &
 
 yeval \
-    --model $MODEL \
-    --task ${TASK}_problemt//${LANG}_translate \
+    --model ${MODEL_PATH}$MODEL \
+    --task ${TASK}_problemt//${LANGUAGE}_translate \
     --include_path lang_boot/tasks/ \
     --api_base "http://localhost:${PORT}/v1" \
-    --run_name $TASK:$LANG:translated:queries \
+    --run_name $TASK+$LANGUAGE+translated+queries \
     --sample_args n=16,temperature=1.0,logprobs=True \
     --trust_remote_code \
-    --output_path data/$MODEL_ALIAS/raw_traces/ $OTHER_ARGS
+    --output_path ${DATA_PATH}data/$MODEL_ALIAS/raw_traces/ $OTHER_ARGS
 
 pkill vllm
 sleep 2m
