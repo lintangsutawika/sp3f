@@ -144,7 +144,8 @@ class TaskRunner:
         # The reward type depends on the tag of the data
         if config.reward_model.enable:
             if config.reward_model.strategy in ["fsdp", "fsdp2"]:
-                from verl.workers.fsdp_workers import RewardModelWorker
+                # from verl.workers.fsdp_workers import RewardModelWorker
+                from lang_boot.reward_model import SentenceRewardModelWorker as RewardModelWorker
             elif config.reward_model.strategy == "megatron":
                 from verl.workers.megatron_workers import RewardModelWorker
             else:
