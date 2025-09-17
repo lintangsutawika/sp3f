@@ -12,7 +12,7 @@ def lang_content(x, y, lang="id"):
     return lang_prob
 
 class BaseLangTask(YevalTask):
-    system_message="Think about it step by step and give your answer at the end in \\boxed{}."
+    # system_message="Think about it step by step and give your answer at the end in \\boxed{}."
     sample_agg_fn={"lang": lambda x: x}
     logging=log_logprob
 

@@ -12,12 +12,23 @@ def lang_content(x, y, lang="id"):
     _, lang_prob = get_lang_score(x, lang=lang)
     return lang_prob
 
+def get_translation(x):
+    pattern = rf"```(.*?)```"
+    match = re.search(pattern, x, re.DOTALL)
+    if match:
+        return match.group(1).strip()
+    elif "English Translation:" in x:
+        return x.split("English Translation:")[-1].strip()
+    return ""
+
 class BaseTranslateTask(YevalTask):
-    postprocessor=lambda x: x.replace("```", "").strip()
+    postprocessor=get_translation
     sampling_args={
         "n": 4,
         "temperature": 1.0,
         "logprobs": True,
+        # "stop": ["```"],
+        # "extra_body": {"include_stop_str_in_output": True}
         }
     sample_agg_fn={"lang": lambda x: x}
     logging=log_logprob
@@ -43,10 +54,10 @@ Respond directly after \"German Translation:\".\
 @register_task("en_translate")
 class ENTranslateTask(BaseTranslateTask):
     system_message="""\
-You are a helpful assistant that can translate from English to English. \
+You are a helpful assistant that can translate to English. \
 Respond directly after \"English Translation:\".\
 """
-    user_message=lambda x: "English Text:\n\n"+f"```\n{x}\n```"+"English Translation:\n\n"
+    user_message=lambda x: "Source Text:\n\n"+f"```\n{x}\n```"+"English Translation:\n\n"
     evaluation={"lang": partial(lang_content, lang="en")}
 
 @register_task("es_translate")
