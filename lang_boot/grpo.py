@@ -76,7 +76,11 @@ LANGUAGE_CODE = {
     "ja": "Japanese",
 }
 
-pairwise_system_message = lambda x: f"""You will be given a solution and two thinking responses.
+pairwise_system_message = lambda x: f"""For the following Query, you will be given a solution and two thinking responses.
+Query Start
+{x["query"]}
+Query End
+
 Solution START
 {x["original"]}
 Solution END
@@ -92,6 +96,7 @@ Response B END
 Identify major and minor errors in response A and B and use the solution as a reference. At the end, choose which is better. \
 Think step by step and answer with either \\boxed{{A}} or \\boxed{{B}}.\
 """
+# Think step by step and answer with either \\boxed{{A}} or \\boxed{{B}}. If both responses are not satisfying, you can answer with \\boxed{{Neither}}.\
 
 # pairwise_system_message = lambda x: f"""You will be given a solution and two thinking responses.
 # Solution START
@@ -213,8 +218,8 @@ class RayGRPOTrainer(CustomRayPPOTrainer):
             chat_list = []
             for idx, (i, j) in enumerate(pairwise_idx):
                 # extract raw prompt
-                base_query = data.non_tensor_batch["raw_prompt"][i]
-                eng_response = data.non_tensor_batch["solution"][i]
+                en_query = data.non_tensor_batch["query"][i]
+                en_response = data.non_tensor_batch["solution"][i]
 
                 response_dict = {}
                 skip_judgement = 0
@@ -249,7 +254,8 @@ class RayGRPOTrainer(CustomRayPPOTrainer):
 
                 x = {
                     "language": tgt_lang_name,
-                    "original": eng_response,
+                    "query": en_query,
+                    "original": en_response,
                     "A": response_dict["A"],
                     "B": response_dict["B"],
                 }
@@ -517,7 +523,9 @@ class RayGRPOTrainer(CustomRayPPOTrainer):
                                     try:
                                         response = await client.chat.completions.create(
                                             # model="Qwen/Qwen3-8B",
-                                            model="azure/o4-mini",
+                                            # model="azure/gpt-5-nano",
+                                            # model="azure/gpt-5-mini",
+                                            model=self.config.trainer.get("judge_model", "azure/o4-mini"),
                                             messages=messages,
                                             **sampling_params,
                                         )
@@ -525,7 +533,7 @@ class RayGRPOTrainer(CustomRayPPOTrainer):
                                         # return [resp.text for resp in response.choices]
                                         return [idx, response.choices[0].message.content]
                                     except Exception as e:
-                                        print(f"Error in judgement: {e}")
+                                        # print(f"Error in judgement: {e}")
                                         return [idx, ""]
 
                                 # async def run_api(all_messages, **sampling_params):
@@ -540,7 +548,8 @@ class RayGRPOTrainer(CustomRayPPOTrainer):
 
                                 async def run_api(prompts, **sampling_params):
                                     all_results = []
-                                    for chunk_batch in chunk(prompts, 128):
+                                    for chunk_idx, chunk_batch in enumerate(chunk(prompts, 128)):
+                                        print("chunk_idx")
                                         response = [get_judgement(idx, messages, **sampling_params) for idx, messages in enumerate(chunk_batch)]
                                         results = await asyncio.gather(*response)
                                         await asyncio.sleep(10)  # to avoid rate limit
@@ -581,8 +590,12 @@ class RayGRPOTrainer(CustomRayPPOTrainer):
                             response_idx = {}
                             _idx = 0
                             for (i, j), response in zip(pairwise_idx, judge_responses):
-                                winning_response = get_boxed_answer(response)
-                                # winning_response = get_answer(response)
+                                try:
+                                    winning_response = get_boxed_answer(response)
+                                    # winning_response = get_answer(response)
+                                except Exception as e:
+                                    # print(f"Error in getting boxed answer: {e}")
+                                    winning_response = "None"
                                 if winning_response == "A":
                                     score = 1.0
                                 elif winning_response == "B":
