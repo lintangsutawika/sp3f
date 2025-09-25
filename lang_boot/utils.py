@@ -5,7 +5,21 @@ from yeval.response.math_responses import get_boxed_answer
 
 from lingua import Language, LanguageDetectorBuilder
 
-detector = LanguageDetectorBuilder.from_all_languages().with_preloaded_language_models().build()
+languages = [
+    Language.ENGLISH,
+    Language.CHINESE,
+    Language.INDONESIAN,
+    Language.JAPANESE,
+    Language.BENGALI,
+    Language.TELUGU,
+    Language.SPANISH,
+    Language.SWAHILI,
+    ]
+
+# detector = LanguageDetectorBuilder.from_all_languages(
+detector = LanguageDetectorBuilder.from_languages(
+    *languages
+).with_preloaded_language_models().build()
 
 def get_last_digit_string(text):
     matches = re.findall(r'\d+', text)
