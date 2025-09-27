@@ -2,8 +2,8 @@
 #SBATCH --job-name=grpo
 #SBATCH --output=logs/%j.out
 #SBATCH --error=logs/%j.out
-#SBATCH --partition=preempt
-#SBATCH --gres=gpu:A6000:8
+#SBATCH --partition=general
+#SBATCH --gres=gpu:L40S:8
 #SBATCH --nodes=1
 #SBATCH --time=2-00:00:00
 #SBATCH --mem=512G
@@ -13,7 +13,7 @@
 
 . ./lang_boot/config/.env
 
-while getopts ":a:m:l:n:t:d:s:f:u:r:v:g:e:j:p:w:y:o:b:z:i:" opt; do
+while getopts ":a:m:l:n:t:d:s:f:u:r:v:g:e:j:p:w:y:o:b:z:i:k:" opt; do
   case ${opt} in
     a ) MODEL_ALIAS=$OPTARG;;
     m ) MODEL=$OPTARG;;
@@ -36,6 +36,7 @@ while getopts ":a:m:l:n:t:d:s:f:u:r:v:g:e:j:p:w:y:o:b:z:i:" opt; do
     b ) DEBUG=$OPTARG;;
     z ) FULL_DATA_PATH=$OPTARG;;
     i ) USE_API=$OPTARG;;
+    k ) JUDGE=$OPTARG;;
     \? ) echo "Usage: cmd [-u] [-p]";;
   esac
 done
@@ -60,12 +61,12 @@ DEFAULT_FULL_DATA_PATH=${DATA_PATH}prep_traces/${TASK}+${LANGUAGE}/
 FULL_DATA_PATH="${FULL_DATA_PATH:-$DEFAULT_FULL_DATA_PATH}"
 FULL_SAVE_PATH=${SAVE_MODEL_PATH}${RUN_NAME}
 DEBUG="${DEBUG:-False}"
-
+JUDGE="${JUDGE:-azure/o4-mini}"
 # MAX_QUERY_LENGTH=4096
 MAX_QUERY_LENGTH=8192
-MAX_RESPONSE_LENGTH=4096
+MAX_RESPONSE_LENGTH=2048
 TRAIN_BS=32
-LOGPROB_BS=16
+LOGPROB_BS=32
 PPO_BS=16
 # TRAIN_BS=4
 # LOGPROB_BS=4
@@ -83,6 +84,7 @@ python -m lang_boot.main_grpo \
     +trainer.use_judge=${USE_JUDGE} \
     +trainer.use_reward_fn=${USE_REWARD_FN} \
     +trainer.use_privileged=${USE_PRIVILEGED} \
+    +trainer.judge_model=${JUDGE} \
     +trainer.debug=${DEBUG} \
     +trainer.use_api_judge=${USE_API} \
     algorithm.norm_adv_by_std_in_grpo=False \
@@ -115,7 +117,7 @@ python -m lang_boot.main_grpo \
     actor_rollout_ref.rollout.log_prob_micro_batch_size_per_gpu=${LOGPROB_BS} \
     actor_rollout_ref.rollout.tensor_model_parallel_size=2 \
     actor_rollout_ref.rollout.name=vllm \
-    actor_rollout_ref.rollout.gpu_memory_utilization=0.75 \
+    actor_rollout_ref.rollout.gpu_memory_utilization=0.6 \
     actor_rollout_ref.rollout.n=${N_ROLLOUTS} \
     actor_rollout_ref.rollout.max_num_batched_tokens=20480 \
     actor_rollout_ref.rollout.enforce_eager=True \
@@ -132,10 +134,10 @@ python -m lang_boot.main_grpo \
     trainer.nnodes=1 \
     trainer.val_before_train=True \
     trainer.balance_batch=False \
-    trainer.save_freq=25 \
+    trainer.save_freq=50 \
     trainer.test_freq=10 \
     trainer.total_epochs=20 \
-    trainer.total_training_steps=255 \
+    trainer.total_training_steps=205 \
     trainer.default_local_dir=${FULL_SAVE_PATH}/checkpoints/ \
     trainer.validation_data_dir=${FULL_SAVE_PATH}/evaluations/ \
     custom_reward_function.path=lang_boot/lang_boot/reward_functions/${FUNCTION_PATH}.py \
