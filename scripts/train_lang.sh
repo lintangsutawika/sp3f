@@ -13,8 +13,36 @@ done
 # SAVE_MODEL_PATH=/scratch/lsutawik/
 # SAVE_MODEL_PATH=/dev/shm/lsutawik/
 
+MODEL=Qwen/Qwen3-4B
+MODEL=Qwen/Qwen2.5-7B
+TASK=deepscaler_train
+SAVE_MODEL_PATH=/datadrive/lsutawik/lbr/models/
+USE_GCS=False
+LANGUAGE=id
+RUN_NUMBER=0
+
+sbatch lang_boot/scripts/train_grpo.sh \
+  -r r_acc-penalize_lang -v ${RUN_NUMBER} \
+  -m ${MODEL} -l ${LANGUAGE} -t ${TASK} \
+  -z /datadrive/lsutawik/lbr/data/deepscaler-${LANGUAGE}-q2.5-7b/ -s ${SAVE_MODEL_PATH} \
+  -u reward_fn_q3 -f compute_score_reward_acc_penalize_lang
+
+bash lang_boot/scripts/train_grpo.sh \
+  -r r_acc-r_penalize_en -v ${RUN_NUMBER} \
+  -m ${MODEL} -l ${LANGUAGE} -t ${TASK} \
+  -z /datadrive/lsutawik/lbr/data/deepscaler-${LANGUAGE}-q2.5-7b/ -s ${SAVE_MODEL_PATH} \
+  -f compute_score_reward_acc_add_penalize_en
+
+bash lang_boot/scripts/train_grpo.sh \
+  -r r_acc-a-r_lang_fn -v ${RUN_NUMBER} \
+  -m ${MODEL} -l ${LANGUAGE} -t ${TASK} \
+  -z /datadrive/lsutawik/lbr/data/deepscaler-${LANGUAGE}-q2.5-7b/ -s ${SAVE_MODEL_PATH} \
+  -f compute_score_reward_acc_add_lang_fn
+
+
 MODEL=Qwen/Qwen3-0.6B
 MODEL=Qwen/Qwen3-4B
+MODEL=Qwen/Qwen2.5-7B
 TASK=deepscaler_train
 SAVE_MODEL_PATH=/data/user_data/lsutawik/lbr-language_bootstrap_reasoning/
 USE_GCS=False
@@ -22,12 +50,17 @@ LANGUAGE=id
 RUN_NUMBER=0
 
 sbatch lang_boot/scripts/train_grpo.sh \
-  -r r_privileged-acc-penalize_lang -v ${RUN_NUMBER} \
+  -r r_privileged-r_acc-r_penalize_en -v ${RUN_NUMBER} \
+  -m ${MODEL} -l ${LANGUAGE} -t ${TASK} \
+  -z /data/user_data/lsutawik/lbr-language_bootstrap_reasoning/data/deepscaler-${LANGUAGE}-q2.5-7b/ -s ${SAVE_MODEL_PATH} -g $USE_GCS \
+  -f compute_score_reward_acc_add_penalize_en -j True -p True -w True -b True
+
+sbatch lang_boot/scripts/train_grpo.sh \
+  -r r_privileged_API_GPT_5-r_acc-r_penalize_en -v ${RUN_NUMBER} \
   -m ${MODEL} -l ${LANGUAGE} -t ${TASK} \
   -z /data/user_data/lsutawik/lbr-language_bootstrap_reasoning/data/deepscaler-${LANGUAGE}-q2.5-7b/ -s ${SAVE_MODEL_PATH} \
-  -u reward_fn_q3 \
-  -f compute_score_reward_acc_penalize_lang \
-  -j True -p True -w True -b True
+  -f compute_score_reward_acc_add_penalize_en \
+  -j True -p True -w True -b True -i True -k azure/gpt-5
 
 sbatch lang_boot/scripts/train_grpo.sh \
   -r r_acc-penalize_lang -v ${RUN_NUMBER} \
@@ -50,6 +83,18 @@ LANGUAGE=id
 RUN_NUMBER=0
 
 
+MODEL=/datadrive/lsutawik/lbr/models/sft-os+Qwen-Qwen2.5-7B+deepscaler_train+en+0/huggingface
+TASK=deepscaler_train
+USE_GCS=False
+LANGUAGE=id
+RUN_NUMBER=0
+
+bash lang_boot/scripts/train_grpo.sh \
+  -r r_acc-r_penalize_en -v ${RUN_NUMBER} \
+  -a sft-Qwen2.5-7B-deepscaler_train \
+  -m ${MODEL} -l ${LANGUAGE} -t ${TASK} \
+  -z /datadrive/lsutawik/lbr/data/deepscaler-${LANGUAGE}-q2.5-7b/ -s ${SAVE_MODEL_PATH} \
+  -f compute_score_reward_acc_add_penalize_en
 
 # SAVE_MODEL_PATH=/scratch/lsutawik/
 # USE_GCS=True
@@ -107,26 +152,42 @@ sbatch lang_boot/scripts/train_grpo.sh \
 
 
 MODEL=Qwen/Qwen2.5-7B
+
+MODEL=/datadrive/lsutawik/lbr/models/sft-os+Qwen-Qwen2.5-7B+deepscaler_train+en+0/huggingface
+
 MODEL=/data/user_data/lsutawik/lbr-language_bootstrap_reasoning/sft-os+Qwen-Qwen2.5-7B+deepscaler_train+en+0/checkpoints/global_step_500/huggingface
 TASK=deepscaler_train
 SAVE_MODEL_PATH=/data/user_data/lsutawik/lbr-language_bootstrap_reasoning/
+# SAVE_MODEL_PATH=/datadrive/lsutawik/lbr/models/
 USE_GCS=False
 LANGUAGE=id
 RUN_NUMBER=0
 
 sbatch lang_boot/scripts/train_grpo.sh \
-  -r r_privileged-r_acc-r_penalize_en -v ${RUN_NUMBER} \
+  -r r_privileged_API-r_acc-r_penalize_en -v ${RUN_NUMBER} \
   -a sft-Qwen2.5-7B-deepscaler_train \
   -m ${MODEL} -l ${LANGUAGE} -t ${TASK} \
   -z /data/user_data/lsutawik/lbr-language_bootstrap_reasoning/data/deepscaler-${LANGUAGE}-q2.5-7b/ -s ${SAVE_MODEL_PATH} \
+  -f compute_score_reward_acc_add_penalize_en \
+  -j True -p True -w True -b True -i True
+
+
+bash lang_boot/scripts/train_grpo.sh \
+  -r r_privileged_API-r_acc-r_penalize_en -v ${RUN_NUMBER} \
+  -a sft-Qwen2.5-7B-deepscaler_train \
+  -m ${MODEL} -l ${LANGUAGE} -t ${TASK} \
+  -z /datadrive/lsutawik/lbr/data/deepscaler-${LANGUAGE}-q2.5-7b/ -s ${SAVE_MODEL_PATH} \
   -f compute_score_reward_acc_add_penalize_en -j True -p True -w True -i True -b True
 
 sbatch lang_boot/scripts/train_grpo.sh \
   -r r_acc-r_penalize_en -v ${RUN_NUMBER} \
-  -a sft-Qwen2.5-7B-deepscaler_train \
   -m ${MODEL} -l ${LANGUAGE} -t ${TASK} \
   -z /data/user_data/lsutawik/lbr-language_bootstrap_reasoning/data/deepscaler-${LANGUAGE}-q2.5-7b/ -s ${SAVE_MODEL_PATH} -g $USE_GCS \
-  -f compute_score_reward_acc_add_penalize_en
+  -f compute_score_reward_acc_add_penalize_en \
+  -o "actor_rollout_ref.actor.checkpoint.save_contents=['model','hf_model','optimizer','extra']"
+
+  -a sft-Qwen2.5-7B-deepscaler_train \
+
 
 sbatch lang_boot/scripts/train_grpo.sh \
   -r r_privileged-r_acc-r_penalize_en -v ${RUN_NUMBER} \
