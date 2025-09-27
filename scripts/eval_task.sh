@@ -27,39 +27,21 @@ while getopts ":s:m:l:r:o:p:t:e:" opt; do
   esac
 done
 
-# for LANGUAGE in id ja es sw
+# -m simplescaling/s1.1-7B
+# -m Qwen/Qwen2.5-7B
+# -m Qwen/Qwen2.5-7B-Instruct
+# for LANGUAGE in id ja es sw bn te
 # do
 #     sbatch lang_boot/scripts/eval_task.sh \
-#         -m Qwen/Qwen3-4B \
+#         -m Qwen/Qwen2.5-7B \
 #         -l ${LANGUAGE} -o "--overwrite"
-# done
-    # sbatch lang_boot/scripts/eval_task.sh \
-    #     -m r_acc-a-r_lang_fn-w-rmse+Qwen-Qwen2.5-7B+deepscaler_train+${LANGUAGE}+0 \
-    #     -s /data/user_data/lsutawik/lbr-language_bootstrap_reasoning/ \
-    #     -e /checkpoints/global_step_250/actor/huggingface/ \
-    #     -l ${LANGUAGE} -o "--overwrite"
-
-# for LANGUAGE in id ja es sw
-# do
-#     for STEP in 250 500 750 1000
-#     do
-#         sbatch lang_boot/scripts/eval_task.sh \
-#             -m sft+Qwen-Qwen2.5-7B+deepscaler_train+en+0/checkpoints/global_step_${STEP} \
-#             -s /data/user_data/lsutawik/lbr-language_bootstrap_reasoning/ \
-#             -e /huggingface/ \
-#             -l ${LANGUAGE} -o "--overwrite"
-#     done
 # done
 
 # sbatch lang_boot/scripts/eval_task.sh \
-#     -m Qwen/Qwen2.5-7B \
-#     -l ${LANGUAGE} -o "--overwrite"
-
-#     sbatch lang_boot/scripts/eval_task.sh \
-#         -s /data/user_data/lsutawik/lbr-language_bootstrap_reasoning/ \
-#         -m Qwen-Qwen2.5-7B-deepscaler_en \
-#         -l ${LANGUAGE} -o "--overwrite"
-# done
+#     -m {TRAINED_MODEL} \
+#     -s /data/user_data/lsutawik/lbr-language_bootstrap_reasoning/ \
+#     -e /checkpoints/global_step_200/actor/huggingface/ \
+#     -l id -o "--overwrite"
 
 RANDOM_PORT=$(( $RANDOM % (65535 - 1024 + 1) + 1024 ))
 PORT="${PORT:-$(( $RANDOM_PORT ))}"
@@ -74,9 +56,7 @@ TASK_LIST=(
 )
 
 PROMPT_LANG_LIST=(
-    # ${LANGUAGE}_measure
     ${LANGUAGE}_system
-    # en_reason
 )
 
 MAX_TOKEN=8192
@@ -87,14 +67,13 @@ vllm serve ${MODEL_PATH}${MODEL}${MODEL_SUFFIX} \
     --tensor_parallel_size ${TP_SIZE} \
     --distributed-executor-backend mp > ${TMPDIR}vllm.txt &
 
-# --sample_args n=1,temperature=0.0,logprobs=True \
 for TASK in ${TASK_LIST[@]}
 do
     for PROMPT in ${PROMPT_LANG_LIST[@]}
     do
         yeval \
             --model ${MODEL_PATH}${MODEL}${MODEL_SUFFIX} \
-            --sample_args "n=8,temperature=0.7,logprobs=True,top_p=0.8,extra_body={'top_k': 20}" \
+            --sample_args "n=8,temperature=0.7,logprobs=True,top_p=0.8" \
             --task "${TASK}t//${PROMPT}" \
             --include_path lang_boot/tasks/ \
             --api_base "http://localhost:${PORT}/v1" \
@@ -102,17 +81,7 @@ do
             --trust_remote_code \
             --output_path ./data/eval_scores/ $OTHER_ARGS
 
-
-        # yeval \
-        #     --model ${MODEL_PATH}${MODEL}${MODEL_SUFFIX} \
-        #     --sample_args n=16,temperature=1.0,logprobs=True \
-        #     --task "${TASK}t//${PROMPT}" \
-        #     --include_path lang_boot/tasks/ \
-        #     --api_base "http://localhost:${PORT}/v1" \
-        #     --run_name $MODEL+$TASK+${PROMPT} \
-        #     --trust_remote_code \
-        #     --output_path ./data/coverage_scores/ $OTHER_ARGS
     done
 done
 pkill vllm
-# sleep 2m
+sleep 2m
