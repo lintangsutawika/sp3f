@@ -2,7 +2,7 @@
 #SBATCH --job-name=sft
 #SBATCH --output=logs/%j.out
 #SBATCH --error=logs/%j.out
-#SBATCH --partition=preempt
+#SBATCH --partition=general
 #SBATCH --gres=gpu:L40S:4
 #SBATCH --nodes=1
 #SBATCH --time=2-00:00:00
@@ -20,18 +20,9 @@
 #     -m Qwen/Qwen2.5-7B \
 #     -l ${LANGUAGE} \
 #     -t deepscaler_train \
-#     -f /data/user_data/lsutawik/lbr-language_bootstrap_reasoning/data/deepscaler_os/ \
+#     -f /data/user_data/lsutawik/lbr-language_bootstrap_reasoning/data/deepscaler-${LANGUAGE}-q2.5-7b/ \
 #     -s /data/user_data/lsutawik/lbr-language_bootstrap_reasoning/ \
-#     -r sft
 # done
-
-# sbatch lang_boot/scripts/train_sft.sh \
-#     -m Qwen/Qwen2.5-7B \
-#     -l en \
-#     -t deepscaler_train \
-#     -f /data/user_data/lsutawik/lbr-language_bootstrap_reasoning/data/deepscaler_os/ \
-#     -s /data/user_data/lsutawik/lbr-language_bootstrap_reasoning/
-#     -r sft
 
 while getopts ":s:m:l:t:d:v:r:o:f:" opt; do
   case ${opt} in
@@ -70,9 +61,9 @@ torchrun \
         +data.shuffle=True \
         +data.filter_overlong_prompts=True \
         data.truncation='left' \
-        data.max_length=2048 \
-        data.train_batch_size=32 \
-        data.micro_batch_size_per_gpu=4 \
+        data.max_length=4192 \
+        data.train_batch_size=16 \
+        data.micro_batch_size_per_gpu=1 \
         model.partial_pretrain=${MODEL} \
         model.fsdp_config.offload_params=True \
         model.fsdp_config.model_dtype=bf16 \
@@ -81,9 +72,9 @@ torchrun \
         trainer.project_name='lbr-lang_boot' \
         trainer.experiment_name=${RUN_NAME} \
         trainer.n_gpus_per_node=${NUM_GPUS} \
-        trainer.save_freq=250 \
+        trainer.save_freq=100 \
         trainer.total_epochs=10 \
-        trainer.total_training_steps=1000 \
+        trainer.total_training_steps=500 \
         trainer.logger=['console','wandb'] \
         trainer.checkpoint.save_contents=['hf_model']
         # model.use_liger=True \
@@ -95,19 +86,3 @@ torchrun \
         # data.prompt_dict_keys=['question'] \
         # +data.response_dict_keys=['answer'] \
         # +data.filter_overlong_prompts=True \
-
-# for STEP in 500 450 400 350 300 250 200 150 100 50
-# do
-#     MODEL_STEP=global_step_${STEP}
-#     PORT=$(( $RANDOM % (65535 - 1024 + 1) + 1024 ))
-#     bash lang_boot/scripts/eval_mgsm.sh \
-#         -s ${TMP_SAVE_PATH} \
-#         -m ${RUN_NAME}/${MODEL_STEP} \
-#         -l ${LANGUAGE} \
-#         -r ${PORT} 
-# done
-
-# mv ${TMP_PATH} ${END_SAVE_PATH}
-        # model.fsdp_config.model_dtype=bf16 \
-        # model.fsdp_config.cpu_offload=True \
-        # model.enable_gradient_checkpointing=True \
