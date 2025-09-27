@@ -15,8 +15,31 @@ import_modules(os.path.join(path, "../tasks/"))
 def from_key(x, key):
     return x[key] if key in x else None
 
+lang_answer = {
+    "en": f"\n\nThus, the answer is ",
+    "id": f"\n\nJadi, jawabannya adalah ",
+    "bn": f"\n\nঅতএব, উত্তর হল ",
+    "te": f"\n\nకాబట్టి, సమాధానం ",
+    "sw": f"\n\nHivyo, jibu ni ",
+    "ja": f"\n\nしたがって、答えは ",
+    "es": f"\n\nPor lo tanto, la respuesta es ",
+}
 
-def select_best_candidate(row, col_name="input_candidates", use_logprob=True, use_accuracy=False, use_lang=False):
+def fix_answer(x, lang="en", answer_key="answer"):
+    solution = x["solution"]
+    answer = x[answer_key]
+    if solution == "":
+        return solution
+
+    ans = get_boxed_answer(solution)
+    if ans == "None":
+        return solution + lang_answer[lang] + f"\\boxed{{{answer}}}."
+        # return solution
+    else:
+        solution = solution.replace(f"\\boxed{{{ans}}}", f"\\boxed{{{answer}}}")
+        return solution
+
+def select_best_candidate(row, col_name="input_candidates", use_logprob=True, use_accuracy=False, use_lang=False, use_parsability=False):
     
     candidates_dict = {'candidate': row[col_name]}
     
@@ -39,10 +62,16 @@ def select_best_candidate(row, col_name="input_candidates", use_logprob=True, us
         candidates_dict["accuracy"] = row["accuracy"]
     else:
         candidates_dict["accuracy"] = [1.0] * len(row[col_name])
-    
+
+    if use_parsability:
+        sort_columns.append('parsability')
+        candidates_dict["parsability"] = [1 if get_boxed_answer(row) != "None" else 0 for row in row[col_name]]
+    else:
+        candidates_dict["parsability"] = [1.0] * len(row[col_name])
+
     candidates_df = pd.DataFrame(candidates_dict)
 
-    candidates_df["score"] = (-1/candidates_df["logprob"]) * candidates_df["lang"] * candidates_df["accuracy"]
+    candidates_df["score"] = (-1/candidates_df["logprob"]) * candidates_df["lang"] * candidates_df["accuracy"] * candidates_dict["parsability"]
 
     candidates_df = candidates_df.sort_values(by="score", ascending=False)
 
@@ -57,6 +86,7 @@ def construct_dataframe(
     output_path=None,
     lang="en",
     use_en_solution=False,
+    use_translated_solution=False,
     en_path=None,
     task="deepscaler_train",
     ):
@@ -91,6 +121,26 @@ def construct_dataframe(
             "answer": y,
         })
 
+    if use_translated_solution:
+        lang_solution_path = os.path.join(data_path, f"raw_traces/{task}+{lang}+translated+solutions/")
+        lang_solution_df = pd.read_json(os.path.join(lang_solution_path, "output.jsonl"), lines=True)
+        lang_solution_df['solution_candidates'] = lang_solution_df.apply(lambda row: from_key(row, "answer"), axis=1)
+        lang_solution_df['solution'] = lang_solution_df.apply(
+            lambda row: select_best_candidate(
+                row, 
+                col_name="solution_candidates",
+                use_logprob=True,
+                use_accuracy=False,
+                use_lang=True,
+                use_parsability=True,
+            ), 
+            axis=1
+        )
+        # query_df['translated_solution'] = lang_solution_df['solution']
+        query_df['translated_solution'] = lang_solution_df.apply(lambda x: fix_answer(x, lang=lang, answer_key="ground_truth"), axis=1)
+    else:
+        query_df['translated_solution'] = "None"
+
     if use_en_solution:
 
         if en_path:
@@ -114,24 +164,11 @@ def construct_dataframe(
     else:
         dataset_df = load_dataset("agentica-org/DeepScaleR-Preview-Dataset", split="train").to_pandas()
         # query_df['solution'] = None
-        def fix_answer(x):
-            solution = x["solution"]
-            answer = x["answer"]
-            if solution == "":
-                return solution
-
-            ans = get_boxed_answer(solution)
-            if ans == "None":
-                return solution + f"\n\nThus, the answer is $\\boxed{{{answer}}}$."
-                # return solution
-            else:
-                solution = solution.replace(f"\\boxed{{{ans}}}", f"\\boxed{{{answer}}}")
-                return solution
-
         query_df['solution'] = dataset_df.apply(lambda x: fix_answer(x), axis=1)
         query_df['query'] = dataset_df['problem']
 
     df['solution'] = query_df['solution']
+    df['translated_solution'] = query_df['translated_solution']
     df['reward_model'] = query_df.apply(
         lambda row: {
             "ground_truth": str(row["answer"])
@@ -160,7 +197,7 @@ def construct_dataframe(
     )
 
     df["messages"] = df.apply(
-        lambda row: row["input"] + [{"role": "assistant", "content": row["output"]}],
+        lambda row: row["input"] + [{"role": "assistant", "content": row["translated_solution"]}],
         axis=1
     )
 
@@ -226,6 +263,7 @@ if __name__ == "__main__":
     parser.add_argument('--output_path', type=str, default=None)
     parser.add_argument('--lang', type=str, default="en")
     parser.add_argument('--use_en_solution', action='store_true', default=False, help="Use english solutions")
+    parser.add_argument('--use_translated_solution', action='store_true', default=False, help="Use translated solutions")
     parser.add_argument('--en_path', type=str, default=None)
     args = parser.parse_args()
     construct_dataframe(
@@ -234,4 +272,5 @@ if __name__ == "__main__":
         lang=args.lang,
         use_en_solution=args.use_en_solution,
         en_path=args.en_path,
+        use_translated_solution=args.use_translated_solution,
     )
