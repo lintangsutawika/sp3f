@@ -76,7 +76,7 @@ LANGUAGE_CODE = {
     "ja": "Japanese",
 }
 
-pairwise_system_message = lambda x: f"""For the following Query, you will be given a solution and two thinking responses.
+API_judge_system_message = lambda x: f"""For the following Query, you will be given a solution and two thinking responses.
 Query Start
 {x["query"]}
 Query End
@@ -91,27 +91,30 @@ Response A END
 
 Response B START
 {x["B"]}
-Response B END
-
+Response B END""" + """
 Identify major and minor errors in response A and B and use the solution as a reference. At the end, choose which is better. \
 Think step by step and answer with either \\boxed{{A}} or \\boxed{{B}}.\
 """
 # Think step by step and answer with either \\boxed{{A}} or \\boxed{{B}}. If both responses are not satisfying, you can answer with \\boxed{{Neither}}.\
 
-# pairwise_system_message = lambda x: f"""You will be given a solution and two thinking responses.
-# Solution START
-# {x["original"]}
-# Solution END
+self_judge_system_message = lambda x: f"""For the following Query, you will be given a solution and two thinking responses.
+Query Start
+{x["query"]}
+Query End
 
-# Thinking A START
-# {x["A"]}
-# Thinking A END
+Solution START
+{x["original"]}
+Solution END
 
-# Thinking B START
-# {x["B"]}
-# Thinking B END
+Response A START
+{x["A"]}
+Response A END
 
-# Between thinking responses \\boxed{{A}} or \\boxed{{B}} which is aligned the most with the Solution?""" + "Think step by step and answer with either \\boxed{{A}} or \\boxed{{B}}./nothink"
+Response B START
+{x["B"]}
+Response B END""""""
+Between responses \\boxed{{A}} or \\boxed{{B}}, the one that is more aligned with the solution is \\boxed{\
+"""
 
 language_system_message = """\
 You are a helpful assistant. You will be given a response and classify what language it is in. \
@@ -235,20 +238,22 @@ class RayGRPOTrainer(CustomRayPPOTrainer):
                     # remove bos and eos
                     response = response.replace(self.tokenizer.eos_token, "")
 
-                    # if check_for_boxed_content:
-                    #     # box_content = get_boxed_answer(response)
-                    #     box_content = get_answer(response)
-                    #     if box_content != "None":
-                    #         response = response.replace(f"\\boxed{{{box_content}}}", box_content)
-
                     if tokenize:
-                        if "</think>" in response:
-                            thinking_part = response.split("</think>")[0] + "</think>"
-                        else:
-                            # thinking_part = "<think>" + "</think>"
-                            thinking_part = "<think>Empty Response</think>"
+                        # if check_for_boxed_content:
+                        box_content = get_boxed_answer(response)
+                        # box_content = get_answer(response)
+                        if box_content != "None":
                             skip_judgement += 1
-                        response_dict[idx_resp] = thinking_part
+                            # response = response.replace(f"\\boxed{{{box_content}}}", box_content)
+
+                    #     if "</think>" in response:
+                    #         thinking_part = response.split("</think>")[0] + "</think>"
+                    #     else:
+                    #         # thinking_part = "<think>" + "</think>"
+                    #         thinking_part = "<think>Empty Response</think>"
+                    #     thinking_part = "Empty Response"
+                    #     skip_judgement += 1
+                    #     response_dict[idx_resp] = "Empty Response"
                     else:
                         response_dict[idx_resp] = response
 
@@ -260,15 +265,15 @@ class RayGRPOTrainer(CustomRayPPOTrainer):
                     "B": response_dict["B"],
                 }
 
-                if tokenize:
-                    content = system_message(x) + "/no_think"
-                else:
-                    content = system_message(x)
+                # if tokenize:
+                #     content = system_message(x) + "/no_think"
+                # else:
+                content = system_message(x)
 
                 if skip_judgement == 2:
                     # Skip
                     chat_list.append([
-                        {"role": "user", "content": "<|im_end|>/no_think say 'hi'."}
+                        {"role": "user", "content": "<|im_start|><|im_end|><|im_start|><|im_end|><|im_start|><|im_end|>"}
                     ])
                 else:
                     chat_list.append([
@@ -498,7 +503,7 @@ class RayGRPOTrainer(CustomRayPPOTrainer):
                                 batch,
                                 n_rollouts=self.config.actor_rollout_ref.rollout.n,
                                 n_compare=self.config.actor_rollout_ref.rollout.compare,
-                                system_message=pairwise_system_message,
+                                system_message=API_judge_system_message if self.config.trainer.get("use_api_judge", False) else self_judge_system_message,
                                 tokenize=not self.config.trainer.get("use_api_judge", False)
                                 )
                             n_rollouts = self.config.actor_rollout_ref.rollout.n
@@ -515,7 +520,7 @@ class RayGRPOTrainer(CustomRayPPOTrainer):
                                     # "stop": ["}"],
                                     # "extra_body": {
                                     #     "include_stop_str_in_output": True,
-                                    #     "guided_choice": ["A}", "B}"],
+                                    # #     "guided_choice": ["A}", "B}"],
                                     # },
                                 }
 
