@@ -68,6 +68,7 @@ client = AsyncAzureOpenAI(
 )
 
 LANGUAGE_CODE = {
+    "bn": "Bengali",
     "en": "English",
     "zh": "Chinese",
     "es": "Spanish",
@@ -689,7 +690,8 @@ class RayGRPOTrainer(CustomRayPPOTrainer):
                                 )
 
                             # reward_tensor += reward_tensor_from_fn
-                            reward_tensor = 0.5*reward_tensor + 0.5*reward_tensor_from_fn
+                            # reward_tensor = 0.5*reward_tensor + 0.5*reward_tensor_from_fn
+                            reward_tensor = reward_tensor + reward_tensor_from_fn
                         else:
                             reward_tensor = reward_tensor_from_fn
 
