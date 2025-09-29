@@ -1,5 +1,4 @@
 from functools import partial
-from langdetect import detect_langs
 
 from yeval.response.math_responses import get_boxed_answer
 from yeval.task import register_task, YevalTask
