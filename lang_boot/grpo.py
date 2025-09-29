@@ -92,10 +92,14 @@ Response A END
 Response B START
 {x["B"]}
 Response B END""" + """
-Identify major and minor errors in response A and B and use the solution as a reference. At the end, choose which is better. \
-Think step by step and answer with either \\boxed{{A}} or \\boxed{{B}}.\
-"""
-# Think step by step and answer with either \\boxed{{A}} or \\boxed{{B}}. If both responses are not satisfying, you can answer with \\boxed{{Neither}}.\
+First, identify major and minor errors in response A and B and use the query and solution as a reference. \
+Finally, choose which is better by answering with either \\boxed{{A}} or \\boxed{{B}}. \
+You MUST provide your reasoning before the answer."""
+
+#  + """
+# Identify major and minor errors in response A and B and use the query and solution as a reference. At the end, choose which is better. \
+# Think step by step and answer with either \\boxed{{A}} or \\boxed{{B}}.\
+# """
 
 self_judge_system_message = lambda x: f"""For the following Query, you will be given a solution and two thinking responses.
 Query Start
