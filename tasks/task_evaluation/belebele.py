@@ -6,7 +6,10 @@ from yeval.task import register_task, YevalTask
 from yeval.log.usage import log_logprob
 from yeval.response.math_responses import get_boxed_answer
 
-from lang_boot.utils import extract_text_content
+from lang_boot.utils import (
+    extract_text_content,
+    highest_loglikelihood
+    )
 
 path = os.path.dirname(__file__)
 
@@ -41,6 +44,14 @@ class BelebeleTask(YevalTask):
     evaluation={"accuracy": eval_with_postprocessing}
     sample_agg_fn={"accuracy": lambda x: x}
     logging=log_logprob
+
+@register_task("belebele_translate")
+class JSONBelebeleTask(BelebeleTask):
+    data_path="json"
+    input_text=lambda x: x["input"]
+    output_text=lambda x: x["output"]
+    test_split="train"
+    preprocessing=highest_loglikelihood
 
 @register_task("belebele_bn")
 class Belebele_BN_Task(BelebeleTask):

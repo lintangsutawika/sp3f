@@ -15,7 +15,10 @@ from yeval.metrics import math_eval
 from yeval.log.usage import log_logprob
 from yeval.response.math_responses import get_boxed_answer
 
-from lang_boot.utils import math_eval_with_postprocessing
+from lang_boot.utils import (
+    math_eval_with_postprocessing,
+    highest_loglikelihood
+    )
 
 path = os.path.dirname(__file__)
 
@@ -27,6 +30,14 @@ class MT_MATH100Task(YevalTask):
     evaluation={"accuracy": math_eval_with_postprocessing}
     sample_agg_fn={"accuracy": lambda x: x}
     logging=log_logprob
+
+@register_task("mt_math100_translate")
+class JSONMT_MATH100Task(MT_MATH100Task):
+    data_path="json"
+    input_text=lambda x: x["input"]
+    output_text=lambda x: x["output"]
+    test_split="train"
+    preprocessing=highest_loglikelihood
 
 @register_task("mt_math100_bn")
 class MT_MATH100_BN_Task(MT_MATH100Task):
