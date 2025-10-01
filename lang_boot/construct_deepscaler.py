@@ -51,29 +51,29 @@ def select_best_candidate(row, col_name="input_candidates", use_logprob=True, us
             sort_columns.append('logprob')
             candidates_dict["logprob"] = np.exp(np.asarray(row["logprob"]))
         else:
-            candidates_dict["logprob"] = [1.0] * len(row[col_name])
+            candidates_dict["logprob"] = [0.0] * len(row[col_name])
 
         if use_lang:
             sort_columns.append('lang')
             candidates_dict["lang"] = row["lang"]
         else:
-            candidates_dict["lang"] = [1.0] * len(row[col_name])
+            candidates_dict["lang"] = [0.0] * len(row[col_name])
 
         if use_accuracy:
             sort_columns.append('accuracy')
             candidates_dict["accuracy"] = row["accuracy"]
         else:
-            candidates_dict["accuracy"] = [1.0] * len(row[col_name])
+            candidates_dict["accuracy"] = [0.0] * len(row[col_name])
 
         if use_parsability:
             sort_columns.append('parsability')
             candidates_dict["parsability"] = [1 if get_boxed_answer(row) != "None" else 0 for row in row[col_name]]
         else:
-            candidates_dict["parsability"] = [1.0] * len(row[col_name])
+            candidates_dict["parsability"] = [0.0] * len(row[col_name])
 
         candidates_df = pd.DataFrame(candidates_dict)
 
-        candidates_df["score"] = candidates_df["logprob"] * candidates_df["lang"] * candidates_df["accuracy"] * candidates_dict["parsability"]
+        candidates_df["score"] = candidates_df["logprob"] + candidates_df["lang"] + candidates_df["accuracy"] + candidates_dict["parsability"]
 
         candidates_df = candidates_df.sort_values(by="score", ascending=False)
 
