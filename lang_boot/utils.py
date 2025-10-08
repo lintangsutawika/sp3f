@@ -6,19 +6,40 @@ from yeval.response.math_responses import get_boxed_answer
 from lingua import Language, LanguageDetectorBuilder
 
 languages = [
-    Language.ENGLISH,
-    Language.CHINESE,
-    Language.INDONESIAN,
-    Language.JAPANESE,
+    Language.ARABIC,
     Language.BENGALI,
-    Language.TELUGU,
+    Language.GERMAN,
     Language.SPANISH,
+    Language.FRENCH,
+    Language.HINDI,
+    Language.INDONESIAN,
+    Language.ITALIAN,
+    Language.JAPANESE,
+    Language.RUSSIAN,
+    Language.KOREAN,
+    Language.PORTUGUESE,
     Language.SWAHILI,
+    Language.YORUBA,
+    Language.CHINESE,
+    Language.TELUGU,
+    Language.THAI,
+    Language.ENGLISH,
+    Language.CHINESE, 
     ]
 
 # detector = LanguageDetectorBuilder.from_all_languages(
-detector = LanguageDetectorBuilder.from_languages(
-    *languages
+# detector = LanguageDetectorBuilder.from_languages(
+#     *languages
+# ).with_preloaded_language_models().build()
+
+detector = {
+    lang.iso_code_639_1.name.lower(): LanguageDetectorBuilder.from_languages(
+        *[lang, Language.ENGLISH]
+    ).with_preloaded_language_models().build() for lang in languages
+}
+
+detector["en"] = LanguageDetectorBuilder.from_languages(
+    *[Language.ENGLISH]
 ).with_preloaded_language_models().build()
 
 def get_last_digit_string(text):
@@ -63,7 +84,7 @@ def get_lang_score(prediction, lang="id", check_en=False, ignore_thinking=True):
     try:
         total_len = 0
         lang_dict = {}
-        for detected_lang in detector.detect_multiple_languages_of(prediction):
+        for detected_lang in detector[lang].detect_multiple_languages_of(prediction):
             total_len += detected_lang.word_count
             lang_code = detected_lang.language.iso_code_639_1.name.lower()
             if lang_code not in lang_dict:
