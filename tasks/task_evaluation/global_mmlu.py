@@ -63,6 +63,10 @@ class JSONGSM8KTrainTask(GlobalMMLULiteTask):
     test_split="train"
     preprocessing=highest_loglikelihood
 
+@register_task("global_mmlu_ar")
+class GlobalMMLU_AR_Task(GlobalMMLULiteTask):
+    data_name="ar"
+
 @register_task("global_mmlu_bn")
 class GlobalMMLU_BN_Task(GlobalMMLULiteTask):
     data_name="bn"
@@ -83,81 +87,43 @@ class GlobalMMLU_ES_Task(GlobalMMLULiteTask):
 class GlobalMMLU_FR_Task(GlobalMMLULiteTask):
     data_name="fr"
 
-@register_task("global_mmlu_ja")
-class GlobalMMLU_JA_Task(GlobalMMLULiteTask):
-    data_name="ja"
-
-@register_task("global_mmlu_ru")
-class GlobalMMLU_RU_Task(GlobalMMLULiteTask):
-    data_name="ru"
-
-@register_task("global_mmlu_sw")
-class GlobalMMLU_SW_Task(GlobalMMLULiteTask):
-    data_name="sw"
-
-@register_task("global_mmlu_te")
-class GlobalMMLU_TE_Task(GlobalMMLULiteTask):
-    data_name="te"
-
-@register_task("global_mmlu_th")
-class GlobalMMLU_TH_Task(GlobalMMLULiteTask):
-    data_name="th"
-
-@register_task("global_mmlu_zh")
-class GlobalMMLU_ZH_Task(GlobalMMLULiteTask):
-    data_name="zh"
+@register_task("global_mmlu_hi")
+class GlobalMMLU_HI_Task(GlobalMMLULiteTask):
+    data_name="hi"
 
 @register_task("global_mmlu_id")
 class GlobalMMLU_ID_Task(GlobalMMLULiteTask):
     data_name="id"
 
-class GlobalMMLULiteDevTask(GlobalMMLULiteTask):
-    test_split="dev"
+@register_task("global_mmlu_it")
+class GlobalMMLU_IT_Task(GlobalMMLULiteTask):
+    data_name="it"
 
-@register_task("global_mmlu_bn_dev")
-class GlobalMMLU_BN_Task(GlobalMMLULiteDevTask):
-    data_name="bn"
-
-@register_task("global_mmlu_de_dev")
-class GlobalMMLU_DE_Task(GlobalMMLULiteDevTask):
-    data_name="de"
-
-@register_task("global_mmlu_en_dev")
-class GlobalMMLU_EN_Task(GlobalMMLULiteDevTask):
-    data_name="en"
-
-@register_task("global_mmlu_es_dev")
-class GlobalMMLU_ES_Task(GlobalMMLULiteDevTask):
-    data_name="es"
-
-@register_task("global_mmlu_fr_dev")
-class GlobalMMLU_FR_Task(GlobalMMLULiteDevTask):
-    data_name="fr"
-
-@register_task("global_mmlu_ja_dev")
-class GlobalMMLU_JA_Task(GlobalMMLULiteDevTask):
+@register_task("global_mmlu_ja")
+class GlobalMMLU_JA_Task(GlobalMMLULiteTask):
     data_name="ja"
 
-@register_task("global_mmlu_ru_dev")
-class GlobalMMLU_RU_Task(GlobalMMLULiteDevTask):
-    data_name="ru"
+@register_task("global_mmlu_ko")
+class GlobalMMLU_KO_Task(GlobalMMLULiteTask):
+    data_name="ko"
 
-@register_task("global_mmlu_sw_dev")
-class GlobalMMLU_SW_Task(GlobalMMLULiteDevTask):
+@register_task("global_mmlu_my")
+class GlobalMMLU_MY_Task(GlobalMMLULiteTask):
+    data_name="my"
+
+@register_task("global_mmlu_pt")
+class GlobalMMLU_PT_Task(GlobalMMLULiteTask):
+    data_name="pt"
+
+@register_task("global_mmlu_sw")
+class GlobalMMLU_SW_Task(GlobalMMLULiteTask):
     data_name="sw"
 
-@register_task("global_mmlu_te_dev")
-class GlobalMMLU_TE_Task(GlobalMMLULiteDevTask):
-    data_name="te"
+@register_task("global_mmlu_yo")
+class GlobalMMLU_YO_Task(GlobalMMLULiteTask):
+    data_name="yo"
 
-@register_task("global_mmlu_th_dev")
-class GlobalMMLU_TH_Task(GlobalMMLULiteDevTask):
-    data_name="th"
-
-@register_task("global_mmlu_zh_dev")
-class GlobalMMLU_ZH_Task(GlobalMMLULiteDevTask):
+@register_task("global_mmlu_zh")
+class GlobalMMLU_ZH_Task(GlobalMMLULiteTask):
     data_name="zh"
 
-@register_task("global_mmlu_id_dev")
-class GlobalMMLU_ID_Task(GlobalMMLULiteDevTask):
-    data_name="id"
