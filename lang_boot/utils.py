@@ -81,6 +81,7 @@ def get_lang_score(prediction, lang="id", check_en=False, ignore_thinking=True):
             prediction = prediction.split("</think>")[-1]
 
     lang_prob = 0.0
+    en_lang_prob = 0.0
     try:
         total_len = 0
         lang_dict = {}
