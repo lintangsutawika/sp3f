@@ -13,7 +13,7 @@
 
 . ./lang_boot/config/.env
 
-while getopts ":a:m:l:n:t:d:s:f:u:r:v:g:e:j:p:w:y:o:b:z:i:k:" opt; do
+while getopts ":a:m:l:n:t:d:s:f:u:r:v:g:e:j:p:w:y:o:b:z:i:k:c:" opt; do
   case ${opt} in
     a ) MODEL_ALIAS=$OPTARG;;
     m ) MODEL=$OPTARG;;
@@ -29,6 +29,7 @@ while getopts ":a:m:l:n:t:d:s:f:u:r:v:g:e:j:p:w:y:o:b:z:i:k:" opt; do
     g ) USE_GCS=$OPTARG;;
     e ) SOURCE_TYPE=$OPTARG;;
     j ) USE_JUDGE=$OPTARG;;
+    c ) USE_JUDGE_ALT=$OPTARG;;
     p ) USE_PRIVILEGED=$OPTARG;;
     w ) USE_REWARD_FN=$OPTARG;;
     y ) MODEL_PATH=$OPTARG;;
@@ -48,10 +49,11 @@ USE_JUDGE="${USE_JUDGE:-False}"
 USE_API="${USE_API:-False}"
 USE_PRIVILEGED="${USE_PRIVILEGED:-False}"
 USE_REWARD_FN="${USE_REWARD_FN:-False}"
+USE_JUDGE_ALT="${USE_JUDGE_ALT:-False}"
 NUM_GPUS=$(nvidia-smi -L | wc -l)
 USE_GCS="${USE_GCS:-False}"
 N_ROLLOUTS="${N_ROLLOUTS:-8}"
-N_COMPARES="${N_COMPARES:-4}"
+N_COMPARES="${N_COMPARES:-7}"
 RUN_NUMBER="${RUN_NUMBER:-0}"
 FUNCTION_NAME="${FUNCTION_NAME:-compute_score}"
 FUNCTION_PATH="${FUNCTION_PATH:-reward_fn}"
@@ -67,7 +69,7 @@ MAX_QUERY_LENGTH=8192
 MAX_RESPONSE_LENGTH=2048
 TRAIN_BS=32
 LOGPROB_BS=32
-PPO_BS=16
+PPO_BS=32
 # TRAIN_BS=4
 # LOGPROB_BS=4
 # PPO_BS=2
@@ -85,6 +87,7 @@ python -m lang_boot.main_grpo \
     +trainer.use_reward_fn=${USE_REWARD_FN} \
     +trainer.use_privileged=${USE_PRIVILEGED} \
     +trainer.judge_model=${JUDGE} \
+    +trainer.use_judge_alt=${USE_JUDGE_ALT} \
     +trainer.debug=${DEBUG} \
     +trainer.use_api_judge=${USE_API} \
     algorithm.norm_adv_by_std_in_grpo=False \
@@ -137,7 +140,7 @@ python -m lang_boot.main_grpo \
     trainer.save_freq=50 \
     trainer.test_freq=10 \
     trainer.total_epochs=20 \
-    trainer.total_training_steps=205 \
+    trainer.total_training_steps=255 \
     trainer.default_local_dir=${FULL_SAVE_PATH}/checkpoints/ \
     trainer.validation_data_dir=${FULL_SAVE_PATH}/evaluations/ \
     custom_reward_function.path=lang_boot/lang_boot/reward_functions/${FUNCTION_PATH}.py \
