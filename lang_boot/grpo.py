@@ -60,12 +60,12 @@ from openai import AsyncOpenAI, AsyncAzureOpenAI
 
 LLM_URL = os.environ.get('CMU_URL')
 LLM_KEY = os.environ.get('CMU_KEY')
-# client = AsyncOpenAI(base_url=LLM_URL, api_key=LLM_KEY)
-client = AsyncAzureOpenAI(
-    azure_endpoint=LLM_URL,
-    api_key=LLM_KEY,
-    api_version="2024-12-01-preview"
-)
+client = AsyncOpenAI(base_url=LLM_URL, api_key=LLM_KEY)
+# client = AsyncAzureOpenAI(
+#     azure_endpoint=LLM_URL,
+#     api_key=LLM_KEY,
+#     api_version="2024-12-01-preview"
+# )
 
 LANGUAGE_CODE = {
     "bn": "Bengali",
@@ -75,16 +75,105 @@ LANGUAGE_CODE = {
     "sw": "Swahili",
     "id": "Indonesian",
     "ja": "Japanese",
+    "all": "All",
 }
 
+# API_judge_system_message = lambda x: f"""For the following Query, you will be given a solution and two thinking responses.
+# Query START
+# {x["query"]}
+# Query END
+
+# Solution START
+# {x["solution"]}
+# Solution END
+
+# Response A START
+# {x["response_a"]}
+# Response A END
+
+# Response B START
+# {x["response_b"]}
+# Response B END""" + """
+# First, identify major and minor errors in response A and B and using the query and solution as a reference. \
+# Second, using the solution as reference, decide which of the two responses is closer? \
+# Finally, choose which is better by answering with either \\boxed{{A}} or \\boxed{{B}}. \
+# You MUST provide your reasoning before the answer."""
+
 API_judge_system_message = lambda x: f"""For the following Query, you will be given a solution and two thinking responses.
-Query Start
+Query START
 {x["query"]}
-Query End
+Query END
+
+Response A START
+{x["A"]}
+Response A END
+
+Response B START
+{x["B"]}
+Response B END
 
 Solution START
 {x["original"]}
-Solution END
+Solution END""" + """
+First, using the solution as reference, decide which of the two responses is closer to the solution. \
+Finally, choose which is better by answering with either \\boxed{{A}} or \\boxed{{B}}. \
+You MUST provide your reasoning before the answer."""
+
+PRIVILEGED_SYSTEM_MESSAGE = """You are an expert judge in evaluating the quality of responses to user queries. \
+Your task is to determine which response (A or B) is preferable. \
+You will be provided with the user query and the correct solution. \
+The responses may be in various languages, but the solution will always be in English. \
+Decide based on how well does each response align with the correct solution. \
+The best response should have the closest meaning and intent to the correct solution. \
+Write your analysis and end it by answering with either \\boxed{A} or \\boxed{B}.
+"""
+PRIVILEGED_USER_MESSAGE = lambda x: f"""<Query>
+{x["query"]}
+</Query>
+
+<Correct Solution>
+{x["original"]}
+</Correct Solution>
+
+<Response A>
+{x["A"]}
+</Response A>
+
+<Response B>
+{x["B"]}
+</Response B>""" + """
+First, using the solution as reference, decide which of the two responses is the closest to the solution. \
+Finally, choose which is better by answering with either \\boxed{{A}} or \\boxed{{B}}. \
+You MUST provide your reasoning before the answer."""
+
+NONPRIVILEGED_SYSTEM_MESSAGE = """You are an expert judge in evaluating the quality of responses to user queries. \
+Your task is to determine which response (A or B) is preferable. \
+You will be provided with the user query and the correct solution. \
+The responses may be in various languages. \
+Write your analysis and end it by answering with either \\boxed{A} or \\boxed{B}.
+"""
+NONPRIVILEGED_USER_MESSAGE = lambda x: f"""<Query>
+{x["query"]}
+</Query>
+
+<Response A>
+{x["A"]}
+</Response A>
+
+<Response B>
+{x["B"]}
+</Response B>""" + """
+First, decide which of the two responses is preferable. \
+Finally, choose which is better by answering with either \\boxed{{A}} or \\boxed{{B}}. \
+You MUST provide your reasoning before the answer."""
+
+# You have an example of the correct reasoning in english, <SOLUTION> </SOLUTION>, and you two responses in X language. Considering the both the 
+# response itself and similarity towards the solution, which one is better? \ 
+
+API_judge_alt_system_message = lambda x: f"""For the following Query, you will be given two thinking responses.
+Query START
+{x["query"]}
+Query END
 
 Response A START
 {x["A"]}
@@ -93,7 +182,7 @@ Response A END
 Response B START
 {x["B"]}
 Response B END""" + """
-First, identify major and minor errors in response A and B and use the query and solution as a reference. \
+First, identify major and minor errors in response A and B and use the query as a reference. \
 Finally, choose which is better by answering with either \\boxed{{A}} or \\boxed{{B}}. \
 You MUST provide your reasoning before the answer."""
 
@@ -196,6 +285,7 @@ class RayGRPOTrainer(CustomRayPPOTrainer):
         n_rollouts=None,
         n_compare=None,
         system_message=None,
+        user_message=None,
         check_for_boxed_content=False,
         tokenize=True,
     ):
@@ -273,7 +363,7 @@ class RayGRPOTrainer(CustomRayPPOTrainer):
                 # if tokenize:
                 #     content = system_message(x) + "/no_think"
                 # else:
-                content = system_message(x)
+                # content = system_message(x)
 
                 if skip_judgement == 2:
                     # Skip
@@ -282,8 +372,8 @@ class RayGRPOTrainer(CustomRayPPOTrainer):
                     ])
                 else:
                     chat_list.append([
-                        # {"role": "system", "content": system_message},
-                        {"role": "user", "content": content},
+                        {"role": "system", "content": system_message},
+                        {"role": "user", "content": user_message(x)},
                         # system_message(x)
                     ])
 
@@ -504,11 +594,15 @@ class RayGRPOTrainer(CustomRayPPOTrainer):
                             return token_level_scores
                         
                         if self.config.trainer.get("use_privileged", False):
+
+                            judge_system_message = NONPRIVILEGED_SYSTEM_MESSAGE if self.config.trainer.get("use_judge_alt", False) else PRIVILEGED_SYSTEM_MESSAGE
+                            judge_user_message = NONPRIVILEGED_USER_MESSAGE if self.config.trainer.get("use_judge_alt", False) else PRIVILEGED_USER_MESSAGE
                             judge_batch = self._switch_chat_template(
                                 batch,
                                 n_rollouts=self.config.actor_rollout_ref.rollout.n,
                                 n_compare=self.config.actor_rollout_ref.rollout.compare,
-                                system_message=API_judge_system_message if self.config.trainer.get("use_api_judge", False) else self_judge_system_message,
+                                system_message=judge_system_message,
+                                user_message=judge_user_message,
                                 tokenize=not self.config.trainer.get("use_api_judge", False)
                                 )
                             n_rollouts = self.config.actor_rollout_ref.rollout.n
@@ -558,7 +652,7 @@ class RayGRPOTrainer(CustomRayPPOTrainer):
 
                                 async def run_api(prompts, **sampling_params):
                                     all_results = []
-                                    for chunk_idx, chunk_batch in enumerate(chunk(prompts, 128)):
+                                    for chunk_idx, chunk_batch in enumerate(chunk(prompts, 1024)):
                                         print("chunk_idx")
                                         response = [get_judgement(idx, messages, **sampling_params) for idx, messages in enumerate(chunk_batch)]
                                         results = await asyncio.gather(*response)
@@ -678,16 +772,16 @@ class RayGRPOTrainer(CustomRayPPOTrainer):
                         reward_tensor_from_fn, _ = compute_reward(batch, self.reward_fn)
                         if self.config.trainer.get("use_reward_fn", False):
                             # Save the combined reward tensor for debugging/analysis
-                            if self.config.trainer.get("debug", False):
-                                torch.save(
-                                    reward_tensor_from_fn,
-                                    os.path.join(self.config.trainer.default_local_dir, f"reward_tensor_from_fn_{self.global_steps}.pt")
-                                )
+                            # if self.config.trainer.get("debug", False):
+                            #     torch.save(
+                            #         reward_tensor_from_fn,
+                            #         os.path.join(self.config.trainer.default_local_dir, f"reward_tensor_from_fn_{self.global_steps}.pt")
+                            #     )
 
-                                torch.save(
-                                    reward_tensor,
-                                    os.path.join(self.config.trainer.default_local_dir, f"reward_tensor{self.global_steps}.pt")
-                                )
+                            #     torch.save(
+                            #         reward_tensor,
+                            #         os.path.join(self.config.trainer.default_local_dir, f"reward_tensor{self.global_steps}.pt")
+                            #     )
 
                             # reward_tensor += reward_tensor_from_fn
                             # reward_tensor = 0.5*reward_tensor + 0.5*reward_tensor_from_fn
