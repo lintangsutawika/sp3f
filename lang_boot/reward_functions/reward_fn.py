@@ -25,7 +25,17 @@ eval_fn = {
     **{task: TASK_LIST[f"{task}_en"]().eval for task in eval_tasks}
 }
 
-def compute_score(data_source, solution_str, ground_truth, extra_info=None, use_lang=False, use_penalty=False, use_random=False, use_multiply=False, use_lang_threshold=False, use_parsable=False, penalize_english=False):
+def compute_score(
+    data_source,
+    solution_str,
+    ground_truth,
+    extra_info=None,
+    use_lang=False,
+    use_penalty=False,
+    use_random=False,
+    use_parsable=False,
+    penalize_english=False
+):
 
     task_eval = extra_info["task"].split("/")[0]
     if task_eval == "train_dataset":
@@ -45,31 +55,18 @@ def compute_score(data_source, solution_str, ground_truth, extra_info=None, use_
         reward = ans_score
 
     if use_parsable:
-        reward += 1 if ans else 0
+        if ans != "None":
+            reward += 1
 
     lang = extra_info["lang"]
+    lang_score = 0.0
+    en_lang_score = 0.0
     _, lang_score, en_lang_score = get_lang_score(solution_str, lang=lang, check_en=True)
-    lang_reward = 0.0
-    if use_lang_threshold:
-        lang_penalty += np.sqrt(
-            mean_squared_error(
-                [use_lang_threshold], [lang_score]
-            )
-        )
-
     if use_lang and (lang != "en"):
-        if use_lang_threshold:
-            lang_reward = -lang_penalty
-        else:
-            lang_reward = lang_score
+        reward += lang_score
 
     if penalize_english:
-        lang_reward -= en_lang_score
-
-    if use_multiply:
-        reward *= lang_reward
-    else:
-        reward += lang_reward
+        reward -= en_lang_score
 
     penalty = 0
     N_gram_sizes = [2, 3, 4, 5]
@@ -85,15 +82,15 @@ def compute_score(data_source, solution_str, ground_truth, extra_info=None, use_
         "score": reward,
         "task_score": ans_score,
         "lang_score": lang_score,
-        "lang_penalty": lang_penalty if use_lang_threshold else 0,
         "repetition_penalty": penalty,
         "use_lang": use_lang,
         "use_penalty": use_penalty,
         "use_random": use_random,
+        "use_parsable": use_parsable,
         "gold": ground_truth,
         "ans": ans,
         "parsable": 1 if ans else 0,
-        "use_lang_threshold": use_lang_threshold,
+        "en_lang_score": en_lang_score,
         "penalize_english": penalize_english,
     }
 
@@ -101,23 +98,37 @@ def compute_score_reward_acc(data_source, solution_str, ground_truth, extra_info
     return compute_score(
         data_source, solution_str, ground_truth, extra_info,
         use_lang=False,
-        use_penalty=True,
+        use_penalty=False,
     )
 
-def compute_score_reward_acc_add_lang_fn(data_source, solution_str, ground_truth, extra_info):
+def compute_score_reward_acc_add_lang(data_source, solution_str, ground_truth, extra_info):
     return compute_score(
         data_source, solution_str, ground_truth, extra_info,
         use_lang=True,
-        use_penalty=True,
+        use_penalty=False,
     )
 
-def compute_score_reward_acc_mult_lang_fn(data_source, solution_str, ground_truth, extra_info):
+def compute_score_reward_acc_add_lang_add_penalize_en(data_source, solution_str, ground_truth, extra_info):
     return compute_score(
         data_source, solution_str, ground_truth, extra_info,
         use_lang=True,
-        use_penalty=True,
-        use_multiply=True,
+        penalize_english=True,
     )
+
+def compute_score_reward_acc_add_lang_add_penalize_en(data_source, solution_str, ground_truth, extra_info):
+    return compute_score(
+        data_source, solution_str, ground_truth, extra_info,
+        use_lang=True,
+        penalize_english=True,
+    )
+
+# def compute_score_reward_acc_mult_lang(data_source, solution_str, ground_truth, extra_info):
+#     return compute_score(
+#         data_source, solution_str, ground_truth, extra_info,
+#         use_lang=True,
+#         use_penalty=True,
+#         use_multiply=True,
+#     )
 
 def compute_score_reward_rand(data_source, solution_str, ground_truth, extra_info):
     return compute_score(
@@ -127,7 +138,7 @@ def compute_score_reward_rand(data_source, solution_str, ground_truth, extra_inf
         use_random=True,
     )
 
-def compute_score_reward_acc_add_lang_fn_with_rmse(data_source, solution_str, ground_truth, extra_info):
+def compute_score_reward_acc_add_lang_with_rmse(data_source, solution_str, ground_truth, extra_info):
     return compute_score(
         data_source, solution_str, ground_truth, extra_info,
         use_lang=True,
@@ -135,7 +146,7 @@ def compute_score_reward_acc_add_lang_fn_with_rmse(data_source, solution_str, gr
         use_lang_threshold=0.65,
     )
 
-def compute_score_reward_parseable(data_source, solution_str, ground_truth, extra_info):
+def compute_score_reward_acc_add_parseable(data_source, solution_str, ground_truth, extra_info):
     return compute_score(
         data_source, solution_str, ground_truth, extra_info,
         use_parsable=True,
@@ -152,4 +163,25 @@ def compute_score_reward_acc_add_penalize_en(data_source, solution_str, ground_t
     return compute_score(
         data_source, solution_str, ground_truth, extra_info,
         penalize_english=True,
+    )
+
+def compute_score_reward_acc_add_lang_add_penalize_en(data_source, solution_str, ground_truth, extra_info):
+    return compute_score(
+        data_source, solution_str, ground_truth, extra_info,
+        use_lang=True,
+        penalize_english=True,
+    )
+
+def compute_score_reward_acc_add_lang_add_parseable(data_source, solution_str, ground_truth, extra_info):
+    return compute_score(
+        data_source, solution_str, ground_truth, extra_info,
+        use_parsable=True,
+        use_lang=True,
+    )
+
+def compute_score_reward_acc_add_penalize_en_add_parseable(data_source, solution_str, ground_truth, extra_info):
+    return compute_score(
+        data_source, solution_str, ground_truth, extra_info,
+        penalize_english=True,
+        use_parsable=True,
     )
