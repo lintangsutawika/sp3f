@@ -30,6 +30,7 @@ def compute_score(
     solution_str,
     ground_truth,
     extra_info=None,
+    use_threshold=False,
     use_lang=False,
     use_penalty=False,
     use_random=False,
@@ -62,6 +63,13 @@ def compute_score(
     lang_score = 0.0
     en_lang_score = 0.0
     _, lang_score, en_lang_score = get_lang_score(solution_str, lang=lang, check_en=True)
+
+    if use_threshold is not False:
+        if lang_score < use_threshold:
+            reward += 0.0
+        else:
+            reward += 1.0
+
     if use_lang and (lang != "en"):
         reward += lang_score
 
@@ -87,6 +95,7 @@ def compute_score(
         "use_penalty": use_penalty,
         "use_random": use_random,
         "use_parsable": use_parsable,
+        "use_threshold": use_threshold,
         "gold": ground_truth,
         "ans": ans,
         "parsable": 1 if ans else 0,
@@ -177,6 +186,19 @@ def compute_score_reward_acc_add_lang_add_parseable(data_source, solution_str, g
         data_source, solution_str, ground_truth, extra_info,
         use_parsable=True,
         use_lang=True,
+    )
+
+def compute_score_reward_acc_add_parseable_add_threshold(data_source, solution_str, ground_truth, extra_info):
+    return compute_score(
+        data_source, solution_str, ground_truth, extra_info,
+        use_parsable=True,
+        use_threshold=0.7,
+    )
+
+def compute_score_reward_acc_add_threshold(data_source, solution_str, ground_truth, extra_info):
+    return compute_score(
+        data_source, solution_str, ground_truth, extra_info,
+        use_threshold=0.7,
     )
 
 def compute_score_reward_acc_add_penalize_en_add_parseable(data_source, solution_str, ground_truth, extra_info):
