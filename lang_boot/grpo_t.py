@@ -75,7 +75,6 @@ LANGUAGE_CODE = {
     "sw": "Swahili",
     "id": "Indonesian",
     "ja": "Japanese",
-    "yo": "Yoruba",
     "all": "All",
 }
 
@@ -120,30 +119,58 @@ First, using the solution as reference, decide which of the two responses is clo
 Finally, choose which is better by answering with either \\boxed{{A}} or \\boxed{{B}}. \
 You MUST provide your reasoning before the answer."""
 
-PRIVILEGED_SYSTEM_MESSAGE = """You are an expert judge in evaluating the quality of responses to user queries. \
-Your task is to determine which response (A or B) is preferable. \
-You will be provided with the user query and the correct solution. \
-The responses may be in various languages, but the solution will always be in English. \
-Decide based on how well does each response align with the correct solution. \
-The best response should be the most similar in meaning and logical approach to the correct solution. \
+# PRIVILEGED_SYSTEM_MESSAGE = """You are an expert judge in evaluating the quality of responses to user queries. \
+# Your task is to determine which response (A or B) is preferable. \
+# You will be provided with the user query and the correct solution. \
+# The responses may be in various languages, but the solution will always be in English. \
+# Decide based on how well does each response align with the correct solution. \
+# The best response should be the most similar in meaning and logical approach to the correct solution. \
+# Write your analysis and end it by answering with either \\boxed{A} or \\boxed{B}.
+# """
+# PRIVILEGED_USER_MESSAGE = lambda x: f"""<Query>
+# {x["query"]}
+# </Query>
+
+# <Correct Solution>
+# {x["original"]}
+# </Correct Solution>
+
+# <Response A>
+# {x["A"]}
+# </Response A>
+
+# <Response B>
+# {x["B"]}
+# </Response B>""" + """
+# First, using the solution as reference, decide which of the two responses is the closest to the solution. \
+# Finally, choose which is better by answering with either \\boxed{{A}} or \\boxed{{B}}. \
+# You MUST provide your reasoning before the answer."""
+
+PRIVILEGED_SYSTEM_MESSAGE = """You are an expert judge in evaluating the translation quality of a given query. \
+Your task is to determine which candidate translation (A or B) is preferable. \
+You will be provided with the user query and a reference English translation. \
+Decide based on how well does each translation align with the English translation. \
+The best translation should be the most similar in meaning and way of conveying the original message. \
+The best translation also uses the notations that matches the reference. \
+The response must be a translation of the query and not the solution! \
 Write your analysis and end it by answering with either \\boxed{A} or \\boxed{B}.
 """
 PRIVILEGED_USER_MESSAGE = lambda x: f"""<Query>
 {x["query"]}
 </Query>
 
-<Correct Solution>
+<English Reference Translation>
 {x["original"]}
-</Correct Solution>
+</English Reference Translation>
 
-<Response A>
+<Translation A>
 {x["A"]}
-</Response A>
+</Translation A>
 
-<Response B>
+<Translation B>
 {x["B"]}
-</Response B>""" + """
-First, using the solution as reference, decide which of the two responses is the closest to the solution. \
+</Translation B>""" + """
+First, using the reference translation, decide which of the two candidate translations are the closest. \
 Finally, choose which is better by answering with either \\boxed{{A}} or \\boxed{{B}}. \
 You MUST provide your reasoning before the answer."""
 
@@ -770,25 +797,25 @@ class RayGRPOTrainer(CustomRayPPOTrainer):
                             token_level_scores = _expand_to_token_level(batch, response_scores)
                             reward_tensor = token_level_scores.to("cpu")
 
-                        reward_tensor_from_fn, _ = compute_reward(batch, self.reward_fn)
-                        if self.config.trainer.get("use_reward_fn", False):
-                            # Save the combined reward tensor for debugging/analysis
-                            # if self.config.trainer.get("debug", False):
-                            #     torch.save(
-                            #         reward_tensor_from_fn,
-                            #         os.path.join(self.config.trainer.default_local_dir, f"reward_tensor_from_fn_{self.global_steps}.pt")
-                            #     )
+                        # reward_tensor_from_fn, _ = compute_reward(batch, self.reward_fn)
+                        # if self.config.trainer.get("use_reward_fn", False):
+                        #     # Save the combined reward tensor for debugging/analysis
+                        #     # if self.config.trainer.get("debug", False):
+                        #     #     torch.save(
+                        #     #         reward_tensor_from_fn,
+                        #     #         os.path.join(self.config.trainer.default_local_dir, f"reward_tensor_from_fn_{self.global_steps}.pt")
+                        #     #     )
 
-                            #     torch.save(
-                            #         reward_tensor,
-                            #         os.path.join(self.config.trainer.default_local_dir, f"reward_tensor{self.global_steps}.pt")
-                            #     )
+                        #     #     torch.save(
+                        #     #         reward_tensor,
+                        #     #         os.path.join(self.config.trainer.default_local_dir, f"reward_tensor{self.global_steps}.pt")
+                        #     #     )
 
-                            # reward_tensor += reward_tensor_from_fn
-                            # reward_tensor = 0.5*reward_tensor + 0.5*reward_tensor_from_fn
-                            reward_tensor = reward_tensor + reward_tensor_from_fn
-                        else:
-                            reward_tensor = reward_tensor_from_fn
+                        #     # reward_tensor += reward_tensor_from_fn
+                        #     # reward_tensor = 0.5*reward_tensor + 0.5*reward_tensor_from_fn
+                        #     reward_tensor = reward_tensor + reward_tensor_from_fn
+                        # else:
+                        #     reward_tensor = reward_tensor_from_fn
 
                     # recompute old_log_probs
                     with marked_timer("old_log_prob", timing_raw, color="blue"):

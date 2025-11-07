@@ -69,7 +69,7 @@ MAX_QUERY_LENGTH=8192
 MAX_RESPONSE_LENGTH=2048
 TRAIN_BS=32
 LOGPROB_BS=32
-PPO_BS=32
+PPO_BS=16
 # TRAIN_BS=4
 # LOGPROB_BS=4
 # PPO_BS=2
@@ -140,7 +140,7 @@ python -m lang_boot.main_grpo \
     trainer.save_freq=50 \
     trainer.test_freq=10 \
     trainer.total_epochs=20 \
-    trainer.total_training_steps=255 \
+    trainer.total_training_steps=505 \
     trainer.default_local_dir=${FULL_SAVE_PATH}/checkpoints/ \
     trainer.validation_data_dir=${FULL_SAVE_PATH}/evaluations/ \
     custom_reward_function.path=lang_boot/lang_boot/reward_functions/${FUNCTION_PATH}.py \

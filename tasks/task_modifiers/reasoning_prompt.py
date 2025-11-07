@@ -82,6 +82,11 @@ class ENTranslateTask(BaseLangTask):
     system_message="Reason step by step and put your final answer within \\boxed{}."
     evaluation={"lang": partial(lang_content, lang="en")}
 
+@register_task("ar_system")
+class ARTranslateTask(BaseLangTask):
+    system_message="فكر خطوة بخطوة وضع إجابتك النهائية داخل \\boxed{}."
+    evaluation={"lang": partial(lang_content, lang="ar")}
+
 @register_task("id_system")
 class IDTranslateTask(BaseLangTask):
     system_message="Berpikir langkah demi langkah dan tuliskan jawaban akhir di dalam \\boxed{}."
@@ -96,6 +101,36 @@ class JATranslateTask(BaseLangTask):
 class BNTranslateTask(BaseLangTask):
     system_message="ধাপে ধাপে যুক্তি দিন এবং আপনার চূড়ান্ত উত্তর \\boxed{} এর মধ্যে লিখুন।"
     evaluation={"lang": partial(lang_content, lang="bn")}
+
+@register_task("hi_system")
+class HITranslateTask(BaseLangTask):
+    system_message="कदम दर कदम सोचें और अपना अंतिम उत्तर \\boxed{} के भीतर लिखें।"
+    evaluation={"lang": partial(lang_content, lang="hi")}
+
+@register_task("it_system")
+class ITTranslateTask(BaseLangTask):
+    system_message="Ragiona passo dopo passo e scrivi la tua risposta finale all'interno di \\boxed{}."
+    evaluation={"lang": partial(lang_content, lang="it")}
+
+@register_task("ko_system")
+class KOTranslateTask(BaseLangTask):
+    system_message="단계별로 추론하고 최종 답을 \\boxed{} 안에 넣으세요."
+    evaluation={"lang": partial(lang_content, lang="ko")}
+
+@register_task("my_system")
+class MYTranslateTask(BaseLangTask):
+    system_message="အဆင့်လိုက်စဉ်းစားပြီး သင့်၏နောက်ဆုံးဖြေကို \\boxed{} အတွင်းထည့်ပါ။"
+    evaluation={"lang": partial(lang_content, lang="my")}
+
+@register_task("pt_system")
+class PTTranslateTask(BaseLangTask):
+    system_message="Raciocine passo a passo e coloque sua resposta final dentro de \\boxed{}."
+    evaluation={"lang": partial(lang_content, lang="pt")}
+
+@register_task("yo_system")
+class YOTranslateTask(BaseLangTask):
+    system_message="Ṣe àlàyé ìdí rẹ̀ ní ìpele kọọkan kí o sì fi ìdáhùn ikẹhin rẹ sínú \\boxed{}."
+    evaluation={"lang": partial(lang_content, lang="yo")}
 
 @register_task("de_system")
 class DETranslateTask(BaseLangTask):

@@ -63,7 +63,7 @@ torchrun \
         data.truncation='left' \
         data.max_length=4192 \
         data.train_batch_size=16 \
-        data.micro_batch_size_per_gpu=1 \
+        data.micro_batch_size_per_gpu=4 \
         model.partial_pretrain=${MODEL} \
         model.fsdp_config.offload_params=True \
         model.fsdp_config.model_dtype=bf16 \

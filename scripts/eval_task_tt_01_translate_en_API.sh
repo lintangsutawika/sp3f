@@ -2,7 +2,7 @@
 #SBATCH --job-name=eval
 #SBATCH --output=logs/%j.out
 #SBATCH --error=logs/%j.out
-#SBATCH --partition=preempt
+#SBATCH --partition=general
 #SBATCH --gres=gpu:A6000:1
 #SBATCH --nodes=1
 #SBATCH --time=2-00:00:00
@@ -30,18 +30,12 @@ done
 # -m simplescaling/s1.1-7B
 # -m Qwen/Qwen2.5-7B
 # -m Qwen/Qwen2.5-7B-Instruct
-# for LANGUAGE in id ja es sw bn te
+# for LANGUAGE in id ja es sw bn
 # do
-#     sbatch lang_boot/scripts/eval_task.sh \
-#         -m Qwen/Qwen2.5-7B \
+#     sbatch lang_boot/scripts/eval_task_tt_01_translate_en.sh \
+#         -m Qwen/Qwen2.5-7B-Instruct \
 #         -l ${LANGUAGE} -o "--overwrite"
 # done
-
-# sbatch lang_boot/scripts/eval_task.sh \
-#     -m {TRAINED_MODEL} \
-#     -s /data/user_data/lsutawik/lbr-language_bootstrap_reasoning/ \
-#     -e /checkpoints/global_step_200/actor/huggingface/ \
-#     -l id -o "--overwrite"
 
 RANDOM_PORT=$(( $RANDOM % (65535 - 1024 + 1) + 1024 ))
 PORT="${PORT:-$(( $RANDOM_PORT ))}"
@@ -56,16 +50,18 @@ TASK_LIST=(
 )
 
 PROMPT_LANG_LIST=(
-    ${LANGUAGE}_system
+    en_translate
 )
 
-MAX_TOKEN=8192
-vllm serve ${MODEL_PATH}${MODEL}${MODEL_SUFFIX} \
-    --port ${PORT} \
-    --max_model_len ${MAX_TOKEN} \
-    --pipeline_parallel_size ${PP_SIZE} \
-    --tensor_parallel_size ${TP_SIZE} \
-    --distributed-executor-backend mp > ${TMPDIR}vllm.txt &
+MODEL_ALIAS=$(echo $MODEL | sed 's/\//-/g')
+
+# MAX_TOKEN=8192
+# vllm serve ${MODEL_PATH}${MODEL}${MODEL_SUFFIX} \
+#     --port ${PORT} \
+#     --max_model_len ${MAX_TOKEN} \
+#     --pipeline_parallel_size ${PP_SIZE} \
+#     --tensor_parallel_size ${TP_SIZE} \
+#     --distributed-executor-backend mp > ${TMPDIR}vllm.txt &
 
 for TASK in ${TASK_LIST[@]}
 do
@@ -73,13 +69,15 @@ do
     do
         yeval \
             --model ${MODEL_PATH}${MODEL}${MODEL_SUFFIX} \
-            --sample_args "n=8,temperature=0.7,logprobs=True,top_p=0.8" \
+            --sample_args "n=8" \
             --task "${TASK}t//${PROMPT}" \
             --include_path lang_boot/tasks/ \
-            --api_base "http://localhost:${PORT}/v1" \
-            --run_name $MODEL+$TASK+${PROMPT} \
+            --api_base $CMU_URL \
+            --api_key $CMU_KEY \
+            --run_name $TASK+en \
             --trust_remote_code \
-            --output_path /mnt/labshare/lsutawik/lbr/data/eval_scores/ $OTHER_ARGS
+            --output_path ./data/$MODEL_ALIAS/en_queries/ $OTHER_ARGS
+
     done
 done
 pkill vllm

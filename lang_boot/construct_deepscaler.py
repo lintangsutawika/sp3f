@@ -18,9 +18,22 @@ def from_key(x, key):
 
 lang_answer = {
     "en": f"\n\nThus, the answer is ",
+    "ar": f"\n\nلذا، فإن الإجابة هي ",
+    "it": f"\n\nQuindi, la risposta è ",
+    "fr": f"\n\nDonc, la réponse est ",
+    "de": f"\n\nDaher ist die Antwort ",
+    "hi": f"\n\nइसलिए, उत्तर है ",
+    "ko": f"\n\n따라서, 답은 ",
+    "my": f"\n\nထို့ကြောင့်၊ အဖြေမှာ ",
+    "pt": f"\n\nPortanto, a resposta é ",
+    "ru": f"\n\nТаким образом, ответ ",
+    "th": f"\n\nดังนั้น คำตอบคือ ",
+    "yo": f"\n\nNítorí náà, ìdáhùn rẹ̀ ni ",
+    "zh": f"\n\n因此，答案是 ",
+    "te": f"\n\nకాబట్టి, సమాధానం ",
+    "th": f"\n\nดังนั้น คำตอบคือ ",
     "id": f"\n\nJadi, jawabannya adalah ",
     "bn": f"\n\nঅতএব, উত্তর হল ",
-    "te": f"\n\nకాబట్టి, సమాధానం ",
     "sw": f"\n\nHivyo, jibu ni ",
     "ja": f"\n\nしたがって、答えは ",
     "es": f"\n\nPor lo tanto, la respuesta es ",
@@ -51,7 +64,7 @@ def select_best_candidate(row, col_name="input_candidates", use_logprob=True, us
             sort_columns.append('logprob')
             candidates_dict["logprob"] = np.exp(np.asarray(row["logprob"]))
         else:
-            candidates_dict["logprob"] = [0.0] * len(row[col_name])
+            candidates_dict["logprob"] = ([0.0] * len(row[col_name]))
 
         if use_lang:
             sort_columns.append('lang')
@@ -112,7 +125,8 @@ def construct_dataframe(
             lambda row: select_best_candidate(
                 row, 
                 col_name="input_candidates",
-                use_logprob=True,
+                # use_logprob=True,
+                use_logprob=False,
                 use_accuracy=False,
                 use_lang=True,
             ), 
@@ -133,7 +147,8 @@ def construct_dataframe(
             lambda row: select_best_candidate(
                 row, 
                 col_name="solution_candidates",
-                use_logprob=True,
+                # use_logprob=True,
+                use_logprob=False,
                 use_accuracy=False,
                 use_lang=True,
                 # use_parsability=True,
@@ -223,8 +238,13 @@ def construct_dataframe(
             task_prompt_fn = prompt_fn
 
         eval_df = pd.DataFrame()
-        eval_dataset = TASK_LIST[full_task_name]()
-        x, y = zip(*[eval_dataset.dataset.__getitem__(idx) for idx in range(eval_dataset.dataset.__len__())])
+
+        try:
+            eval_dataset = TASK_LIST[full_task_name]()
+            x, y = zip(*[eval_dataset.dataset.__getitem__(idx) for idx in range(eval_dataset.dataset.__len__())])
+        except:
+            print(f"Task {full_task_name} not found.")
+            continue
 
         eval_df['output'] = [str(_y) for _y in y]
         eval_df['raw_prompt'] = x

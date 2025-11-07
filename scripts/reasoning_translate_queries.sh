@@ -18,7 +18,7 @@
 #     -t deepscaler_train -l ${LANG} -o "--overwrite"
 # done
 
-. ./lang_boot/config/.sft_env
+. ./lang_boot/config/.env
 export VLLM_USE_V1=0
 
 while getopts ":m:l:t:r:o:p:w:x:y:" opt; do
@@ -43,7 +43,7 @@ TP_SIZE="${TP_SIZE:-1}"
 
 MODEL_ALIAS=$(echo $MODEL | sed 's/\//-/g')
 
-MAX_TOKEN=2048
+MAX_TOKEN=4096
 vllm serve ${MODEL_PATH}${MODEL} \
     --port ${PORT} \
     --max_model_len ${MAX_TOKEN} \
@@ -57,9 +57,11 @@ yeval \
     --include_path lang_boot/tasks/ \
     --api_base "http://localhost:${PORT}/v1" \
     --run_name $TASK+$LANGUAGE+translated+queries \
-    --sample_args n=8,temperature=1.0,logprobs=True \
+    --sample_args n=16,temperature=1.0,logprobs=True \
     --trust_remote_code \
     --output_path ${DATA_PATH}data/$MODEL_ALIAS/raw_traces/ $OTHER_ARGS
+    # --no_chat_completion \
+    # ,max_tokens=1024
 
-pkill vllm
-sleep 2m
+# pkill vllm
+# sleep 2m

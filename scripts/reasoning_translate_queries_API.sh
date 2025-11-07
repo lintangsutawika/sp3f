@@ -14,11 +14,11 @@
 # Example usage:
 # for LANG in ja bn es te sw zh id
 # do
-# sbatch lang_boot/scripts/reasoning_translate_solutions.sh \
-#     -m Qwen/Qwen2.5-7B \
-#     -l id \
-#     -t deepscaler_train
+# bash lang_boot/scripts/reasoning_translate_queries_API.sh -m gpt-5-nano \
+#     -x azure/ \
+#     -t deepscaler_train -l ${LANGUAGE} -o "--overwrite"
 # done
+# ar bn de en es fr hi id it ja ko my pt sw yo zh
 
 . ./lang_boot/config/.env
 export VLLM_USE_V1=0
@@ -46,7 +46,7 @@ TP_SIZE="${TP_SIZE:-1}"
 MODEL_ALIAS=$(echo $MODEL | sed 's/\//-/g')
 
 # MAX_TOKEN=4096
-# vllm serve $MODEL \
+# vllm serve ${MODEL_PATH}${MODEL} \
 #     --port ${PORT} \
 #     --max_model_len ${MAX_TOKEN} \
 #     --pipeline_parallel_size ${PP_SIZE} \
@@ -54,16 +54,17 @@ MODEL_ALIAS=$(echo $MODEL | sed 's/\//-/g')
 #     --distributed-executor-backend mp > ${TMPDIR}vllm.txt &
 
 yeval \
-    --model $MODEL \
-    --task ${TASK}_solutiont//${LANGUAGE}_translate \
+    --model ${MODEL_PATH}$MODEL \
+    --task ${TASK}_problemt//${LANGUAGE}_translate \
     --include_path lang_boot/tasks/ \
-    --api_base "http://localhost:${PORT}/v1" \
-    --run_name $TASK+$LANGUAGE+translated+solutions \
-    --sample_args n=16,temperature=1.0,logprobs=True \
+    --api_base $CMU_URL \
+    --api_key $CMU_KEY \
+    --run_name $TASK+$LANGUAGE+translated+queries \
+    --sample_args n=1,temperature=1.0 \
     --trust_remote_code \
-    --output_path ${MODEL_PATH}data/$MODEL_ALIAS/raw_traces/ $OTHER_ARGS
-    # ,max_tokens=2048
+    --output_path ${DATA_PATH}data/$MODEL_ALIAS/raw_traces/ $OTHER_ARGS
     # --no_chat_completion \
+    # ,max_tokens=1024
 
 # pkill vllm
 # sleep 2m

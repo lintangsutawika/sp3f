@@ -75,7 +75,6 @@ LANGUAGE_CODE = {
     "sw": "Swahili",
     "id": "Indonesian",
     "ja": "Japanese",
-    "yo": "Yoruba",
     "all": "All",
 }
 

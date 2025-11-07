@@ -54,16 +54,18 @@ MODEL_ALIAS=$(echo $MODEL | sed 's/\//-/g')
 #     --distributed-executor-backend mp > ${TMPDIR}vllm.txt &
 
 yeval \
-    --model $MODEL \
+    --model ${MODEL_PATH}$MODEL \
     --task ${TASK}_solutiont//${LANGUAGE}_translate \
     --include_path lang_boot/tasks/ \
-    --api_base "http://localhost:${PORT}/v1" \
+    --api_base $CMU_URL \
+    --api_key $CMU_KEY \
     --run_name $TASK+$LANGUAGE+translated+solutions \
-    --sample_args n=16,temperature=1.0,logprobs=True \
+    --sample_args n=1,temperature=1.0 \
     --trust_remote_code \
-    --output_path ${MODEL_PATH}data/$MODEL_ALIAS/raw_traces/ $OTHER_ARGS
+    --output_path ${DATA_PATH}data/$MODEL_ALIAS/raw_traces/ $OTHER_ARGS
     # ,max_tokens=2048
     # --no_chat_completion \
 
 # pkill vllm
 # sleep 2m
+# --sample_args n=16,temperature=1.0,logprobs=True \
