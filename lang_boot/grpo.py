@@ -61,11 +61,7 @@ from openai import AsyncOpenAI, AsyncAzureOpenAI
 LLM_URL = os.environ.get('LLM_API_URL')
 LLM_KEY = os.environ.get('LLM_API_KEY')
 client = AsyncOpenAI(base_url=LLM_URL, api_key=LLM_KEY)
-# client = AsyncAzureOpenAI(
-#     azure_endpoint=LLM_URL,
-#     api_key=LLM_KEY,
-#     api_version="2024-12-01-preview"
-# )
+
 
 LANGUAGE_CODE = {
     "bn": "Bengali",
