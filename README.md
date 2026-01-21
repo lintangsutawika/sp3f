@@ -55,7 +55,7 @@ To use your own data.
 2. `translated_solution`: Equivalent to the English solution translated to a target language.
 3. `reward_model`: For the reward model to use. Consist of dict  with field `ground_truth`, example: `{"ground_truth": "2\\sqrt{3} - 1"}`
 4. `input`: dict that contains the system and user prompt. Example: `[{"role": "system", "content": ...}, {"role": "user", "content": ...}]`
-5. `extra_info`: 
+5. `extra_info`: Auxilary information used for the RLVR, `{"ground_truth": "2\\sqrt{3} - 1", "lang": <Language Code>}`
 
 ## Citation
 
