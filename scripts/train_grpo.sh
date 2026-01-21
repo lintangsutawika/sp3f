@@ -64,11 +64,9 @@ FULL_SAVE_PATH=${SAVE_MODEL_PATH}${RUN_NAME}
 DEBUG="${DEBUG:-False}"
 JUDGE="${JUDGE:-azure/o4-mini}"
 MAX_QUERY_LENGTH=4096
-# MAX_QUERY_LENGTH=8192
 MAX_RESPONSE_LENGTH=2048
 TRAIN_BS=32
 LOGPROB_BS=32
-# PPO_BS=16
 PPO_BS=8
 
 echo $RUN_NAME
@@ -143,7 +141,3 @@ python -m lang_boot.main_grpo \
     custom_reward_function.path=lang_boot/lang_boot/reward_functions/${FUNCTION_PATH}.py \
     custom_reward_function.name=${FUNCTION_NAME} \
     ${OTHER_ARGS}
-
-    # actor_rollout_ref.actor.fsdp_config.param_offload=True \
-    # actor_rollout_ref.actor.fsdp_config.offload_policy=True \
-    # actor_rollout_ref.actor.fsdp_config.optimizer_offload=True \

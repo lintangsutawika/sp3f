@@ -14,7 +14,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """
-FSDP PPO Trainer with Ray-based single controller.
+Adapted FSDP GRPO for SP3F.
 This trainer supports model-agonistic model initialization with huggingface
 """
 
@@ -78,47 +78,6 @@ LANGUAGE_CODE = {
     "all": "All",
 }
 
-# API_judge_system_message = lambda x: f"""For the following Query, you will be given a solution and two thinking responses.
-# Query START
-# {x["query"]}
-# Query END
-
-# Solution START
-# {x["solution"]}
-# Solution END
-
-# Response A START
-# {x["response_a"]}
-# Response A END
-
-# Response B START
-# {x["response_b"]}
-# Response B END""" + """
-# First, identify major and minor errors in response A and B and using the query and solution as a reference. \
-# Second, using the solution as reference, decide which of the two responses is closer? \
-# Finally, choose which is better by answering with either \\boxed{{A}} or \\boxed{{B}}. \
-# You MUST provide your reasoning before the answer."""
-
-API_judge_system_message = lambda x: f"""For the following Query, you will be given a solution and two thinking responses.
-Query START
-{x["query"]}
-Query END
-
-Response A START
-{x["A"]}
-Response A END
-
-Response B START
-{x["B"]}
-Response B END
-
-Solution START
-{x["original"]}
-Solution END""" + """
-First, using the solution as reference, decide which of the two responses is closer to the solution. \
-Finally, choose which is better by answering with either \\boxed{{A}} or \\boxed{{B}}. \
-You MUST provide your reasoning before the answer."""
-
 PRIVILEGED_SYSTEM_MESSAGE = """You are an expert judge in evaluating the quality of responses to user queries. \
 Your task is to determine which response (A or B) is preferable. \
 You will be provided with the user query and the correct solution. \
@@ -167,48 +126,6 @@ First, decide which of the two responses is preferable. \
 Finally, choose which is better by answering with either \\boxed{{A}} or \\boxed{{B}}. \
 You MUST provide your reasoning before the answer."""
 
-# You have an example of the correct reasoning in english, <SOLUTION> </SOLUTION>, and you two responses in X language. Considering the both the 
-# response itself and similarity towards the solution, which one is better? \ 
-
-API_judge_alt_system_message = lambda x: f"""For the following Query, you will be given two thinking responses.
-Query START
-{x["query"]}
-Query END
-
-Response A START
-{x["A"]}
-Response A END
-
-Response B START
-{x["B"]}
-Response B END""" + """
-First, identify major and minor errors in response A and B and use the query as a reference. \
-Finally, choose which is better by answering with either \\boxed{{A}} or \\boxed{{B}}. \
-You MUST provide your reasoning before the answer."""
-
-#  + """
-# Identify major and minor errors in response A and B and use the query and solution as a reference. At the end, choose which is better. \
-# Think step by step and answer with either \\boxed{{A}} or \\boxed{{B}}.\
-# """
-
-self_judge_system_message = lambda x: f"""For the following Query, you will be given a solution and two thinking responses.
-Query Start
-{x["query"]}
-Query End
-
-Solution START
-{x["original"]}
-Solution END
-
-Response A START
-{x["A"]}
-Response A END
-
-Response B START
-{x["B"]}
-Response B END""""""
-Between responses \\boxed{{A}} or \\boxed{{B}}, the one that is more aligned with the solution is \\boxed{\
-"""
 
 language_system_message = """\
 You are a helpful assistant. You will be given a response and classify what language it is in. \

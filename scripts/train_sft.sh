@@ -77,12 +77,3 @@ torchrun \
         trainer.total_training_steps=5000 \
         trainer.logger=['console','wandb'] \
         trainer.checkpoint.save_contents=['hf_model']
-        # model.use_liger=True \
-        # data.prompt_key=input \
-        # data.response_key=output \
-        # trainer.logger="['console', 'wandb']"
-        # data.prompt_key=extra_info \
-        # data.response_key=extra_info \
-        # data.prompt_dict_keys=['question'] \
-        # +data.response_dict_keys=['answer'] \
-        # +data.filter_overlong_prompts=True \
