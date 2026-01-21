@@ -17,7 +17,8 @@ from yeval.response.math_responses import get_boxed_answer
 
 from lang_boot.utils import (
     math_eval_with_postprocessing,
-    highest_loglikelihood
+    highest_loglikelihood,
+    highest_language_content,
     )
 
 path = os.path.dirname(__file__)
@@ -37,7 +38,8 @@ class JSONMGSMTask(MGSMTask):
     input_text=lambda x: x["input"]
     output_text=lambda x: x["output"]
     test_split="train"
-    preprocessing=highest_loglikelihood
+    # preprocessing=highest_loglikelihood
+    preprocessing=highest_language_content
 
 @register_task("mgsm_bn")
 class MGSM_BN_Task(MGSMTask):

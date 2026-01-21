@@ -43,9 +43,9 @@ PP_SIZE="${PP_SIZE:-1}"
 TP_SIZE="${TP_SIZE:-1}"
 
 TASK_LIST=(
-    mgsm_$LANGUAGE
-    global_mmlu_$LANGUAGE
-    belebele_$LANGUAGE
+    # mgsm_$LANGUAGE
+    # global_mmlu_$LANGUAGE
+    # belebele_$LANGUAGE
     mt_math100_$LANGUAGE
 )
 
@@ -79,5 +79,5 @@ do
 
     done
 done
-pkill vllm
-sleep 2m
+# pkill vllm
+# sleep 2m

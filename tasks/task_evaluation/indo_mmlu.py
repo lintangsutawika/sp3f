@@ -15,6 +15,7 @@ from yeval.metrics import math_eval
 from yeval.log.usage import log_logprob
 from yeval.response.math_responses import get_boxed_answer
 
+from lang_boot.utils import extract_text_content
 # from lang_boot.utils import math_eval_with_postprocessing
 
 path = os.path.dirname(__file__)
@@ -39,10 +40,13 @@ def output_text(x):
 def eval_with_postprocessing(x, y):
     label, answer = y.split(":::")
 
-    ans = get_boxed_answer(x).lower()
+    ans = get_boxed_answer(x)
+    ans = extract_text_content(ans).lower()
     if ans == label:
         return 1
     elif ans == answer.lower():
+        return 1
+    elif ans[:1] == label.lower():
         return 1
     return 0
 

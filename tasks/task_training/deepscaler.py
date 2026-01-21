@@ -59,6 +59,13 @@ class LangBootDeepScaleRTestTask(LangBootDeepScaleRTrainTask):
     postprocessor=None
     evaluation={"accuracy": math_eval_with_postprocessing}
 
+@register_task("parquet_deepscaler_train_problem")
+class ParquetDeepScaleRTrainTask(LangBootDeepScaleRTrainTask):
+    data_path="parquet"
+    input_text=lambda x: x['input'][-1]['content']
+    output_text=lambda x: x['extra_info']['ground_truth']
+    aux_keys=["solution"]
+
 @register_task("deepscaler_test_problem")
 class OpenR1Math220KTask(LangBootDeepScaleRTrainTask):
     input_text=lambda x: x["problem"]

@@ -2,14 +2,13 @@
 #SBATCH --job-name=eval
 #SBATCH --output=logs/%j.out
 #SBATCH --error=logs/%j.out
-#SBATCH --partition=preempt
-#SBATCH --gres=gpu:A6000:1
+#SBATCH --partition=general
+#SBATCH --gres=gpu:L40S:1
 #SBATCH --nodes=1
-#SBATCH --time=2-00:00:00
-#SBATCH --mem=512G
-#SBATCH --cpus-per-task=32
+#SBATCH --time=1-00:00:00
+#SBATCH --mem=64G
+#SBATCH --cpus-per-task=8
 #SBATCH --ntasks-per-node=1
-#SBATCH --overcommit
 
 . ./lang_boot/config/.env
 
@@ -50,9 +49,10 @@ TP_SIZE="${TP_SIZE:-1}"
 
 TASK_LIST=(
     mgsm_$LANGUAGE
-    global_mmlu_$LANGUAGE
-    belebele_$LANGUAGE
     mt_math100_$LANGUAGE
+    belebele_$LANGUAGE
+    global_mmlu_$LANGUAGE
+    # global_piqa_$LANGUAGE
 )
 
 PROMPT_LANG_LIST=(
@@ -60,6 +60,9 @@ PROMPT_LANG_LIST=(
 )
 
 MAX_TOKEN=8192
+# Detect number of GPUs
+# NUM_GPUS=$(nvidia-smi --query-gpu=name --format=csv,noheader | wc -l)
+#     --data-parallel-size ${NUM_GPUS} \
 vllm serve ${MODEL_PATH}${MODEL}${MODEL_SUFFIX} \
     --port ${PORT} \
     --max_model_len ${MAX_TOKEN} \
@@ -71,6 +74,7 @@ for TASK in ${TASK_LIST[@]}
 do
     for PROMPT in ${PROMPT_LANG_LIST[@]}
     do
+        # --sample_args "n=8,temperature=0.7,logprobs=True,top_p=0.8,extra_body={'chat_template_kwargs':{'enable_thinking':False}}" \
         yeval \
             --model ${MODEL_PATH}${MODEL}${MODEL_SUFFIX} \
             --sample_args "n=8,temperature=0.7,logprobs=True,top_p=0.8" \
@@ -79,9 +83,9 @@ do
             --api_base "http://localhost:${PORT}/v1" \
             --run_name $MODEL+$TASK+${PROMPT} \
             --trust_remote_code \
-            --output_path ./data/eval_scores/ $OTHER_ARGS
-
+            --output_path /data/user_data/lsutawik/lbr-language_bootstrap_reasoning/data/eval_scores/ $OTHER_ARGS
+            # --run_name $MODEL-thinking+$TASK+${PROMPT} \
     done
 done
-pkill vllm
-sleep 2m
+#pkill vllm
+#sleep 2m

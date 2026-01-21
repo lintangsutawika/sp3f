@@ -40,12 +40,14 @@ PP_SIZE="${PP_SIZE:-1}"
 TP_SIZE="${TP_SIZE:-1}"
 MODEL_ALIAS=$(echo $MODEL | sed 's/\//-/g')
 DEFAULT_DATA_PATH="data/$MODEL_ALIAS/"
-LOCAL_DATA_PATH="${LOCAL_DATA_PATH:-$DEFAULT_DATA_PATH}"
+
+LOCAL_DATA_PATH="/data/user_data/lsutawik/lbr-language_bootstrap_reasoning/data/$MODEL_ALIAS/"
+# LOCAL_DATA_PATH="${LOCAL_DATA_PATH:-$DEFAULT_DATA_PATH}"
 
 TASK_LIST=(
-    mgsm_
-    global_mmlu_
-    belebele_
+    # mgsm_
+    # global_mmlu_
+    # belebele_
     mt_math100_
 )
 
@@ -65,7 +67,7 @@ for TASK in ${TASK_LIST[@]}
 do
     for PROMPT in ${PROMPT_LANG_LIST[@]}
     do
-        SHOW_TASK_NAME="${TASK}${LANGUAGE}"
+        SHOW_TASK_NAME="${TASK}${LANGUAGE}-cn"
         DATA_DIR="${LOCAL_DATA_PATH}en_traces/${MODEL_ALIAS}_Translate_Test+${SHOW_TASK_NAME}+${LANGUAGE}_system/output.jsonl"
         FULL_TASK_NAME="${TASK}translate"
         yeval \
@@ -77,10 +79,10 @@ do
             --api_base "http://localhost:${PORT}/v1" \
             --run_name ${MODEL}_Translate_Test+$SHOW_TASK_NAME+${LANGUAGE}_system \
             --trust_remote_code \
-            --output_path ./data/eval_scores/ $OTHER_ARGS
+            --output_path /data/user_data/lsutawik/lbr-language_bootstrap_reasoning/data/eval_scores/ $OTHER_ARGS
             # --output_path ./data/$MODEL_ALIAS/xx_traces/ $OTHER_ARGS
 
     done
 done
-pkill vllm
-sleep 2m
+# pkill vllm
+# sleep 2m

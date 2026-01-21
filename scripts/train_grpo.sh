@@ -9,7 +9,6 @@
 #SBATCH --mem=512G
 #SBATCH --cpus-per-task=64
 #SBATCH --ntasks-per-node=1
-#SBATCH --exclude=babel-9-3,babel-4-25,babel-14-29,babel-12-9,babel-13-1,babel-7-1,babel-13-13,babel-10-9,babel-7-9,babel-2-13
 
 . ./lang_boot/config/.env
 
@@ -64,15 +63,13 @@ FULL_DATA_PATH="${FULL_DATA_PATH:-$DEFAULT_FULL_DATA_PATH}"
 FULL_SAVE_PATH=${SAVE_MODEL_PATH}${RUN_NAME}
 DEBUG="${DEBUG:-False}"
 JUDGE="${JUDGE:-azure/o4-mini}"
-# MAX_QUERY_LENGTH=4096
-MAX_QUERY_LENGTH=8192
+MAX_QUERY_LENGTH=4096
+# MAX_QUERY_LENGTH=8192
 MAX_RESPONSE_LENGTH=2048
 TRAIN_BS=32
 LOGPROB_BS=32
-PPO_BS=32
-# TRAIN_BS=4
-# LOGPROB_BS=4
-# PPO_BS=2
+# PPO_BS=16
+PPO_BS=8
 
 echo $RUN_NAME
 echo $FUNCTION_NAME
@@ -118,7 +115,7 @@ python -m lang_boot.main_grpo \
     actor_rollout_ref.actor.clip_ratio_low=0.2 \
     actor_rollout_ref.actor.clip_ratio_high=0.28 \
     actor_rollout_ref.rollout.log_prob_micro_batch_size_per_gpu=${LOGPROB_BS} \
-    actor_rollout_ref.rollout.tensor_model_parallel_size=2 \
+    actor_rollout_ref.rollout.tensor_model_parallel_size=1 \
     actor_rollout_ref.rollout.name=vllm \
     actor_rollout_ref.rollout.gpu_memory_utilization=0.6 \
     actor_rollout_ref.rollout.n=${N_ROLLOUTS} \
@@ -135,12 +132,12 @@ python -m lang_boot.main_grpo \
     trainer.experiment_name=${RUN_NAME} \
     trainer.n_gpus_per_node=${NUM_GPUS} \
     trainer.nnodes=1 \
-    trainer.val_before_train=True \
+    trainer.val_before_train=False \
     trainer.balance_batch=False \
-    trainer.save_freq=50 \
-    trainer.test_freq=10 \
+    trainer.save_freq=250 \
+    trainer.test_freq=500 \
     trainer.total_epochs=20 \
-    trainer.total_training_steps=255 \
+    trainer.total_training_steps=2005 \
     trainer.default_local_dir=${FULL_SAVE_PATH}/checkpoints/ \
     trainer.validation_data_dir=${FULL_SAVE_PATH}/evaluations/ \
     custom_reward_function.path=lang_boot/lang_boot/reward_functions/${FUNCTION_PATH}.py \

@@ -82,6 +82,11 @@ class ENTranslateTask(BaseLangTask):
     system_message="Reason step by step and put your final answer within \\boxed{}."
     evaluation={"lang": partial(lang_content, lang="en")}
 
+@register_task("ar_system")
+class ARTranslateTask(BaseLangTask):
+    system_message="فكر خطوة بخطوة وضع إجابتك النهائية داخل \\boxed{}."
+    evaluation={"lang": partial(lang_content, lang="ar")}
+
 @register_task("id_system")
 class IDTranslateTask(BaseLangTask):
     system_message="Berpikir langkah demi langkah dan tuliskan jawaban akhir di dalam \\boxed{}."
@@ -96,6 +101,36 @@ class JATranslateTask(BaseLangTask):
 class BNTranslateTask(BaseLangTask):
     system_message="ধাপে ধাপে যুক্তি দিন এবং আপনার চূড়ান্ত উত্তর \\boxed{} এর মধ্যে লিখুন।"
     evaluation={"lang": partial(lang_content, lang="bn")}
+
+@register_task("hi_system")
+class HITranslateTask(BaseLangTask):
+    system_message="कदम दर कदम सोचें और अपना अंतिम उत्तर \\boxed{} के भीतर लिखें।"
+    evaluation={"lang": partial(lang_content, lang="hi")}
+
+@register_task("it_system")
+class ITTranslateTask(BaseLangTask):
+    system_message="Ragiona passo dopo passo e scrivi la tua risposta finale all'interno di \\boxed{}."
+    evaluation={"lang": partial(lang_content, lang="it")}
+
+@register_task("ko_system")
+class KOTranslateTask(BaseLangTask):
+    system_message="단계별로 추론하고 최종 답을 \\boxed{} 안에 넣으세요."
+    evaluation={"lang": partial(lang_content, lang="ko")}
+
+@register_task("my_system")
+class MYTranslateTask(BaseLangTask):
+    system_message="အဆင့်လိုက်စဉ်းစားပြီး သင့်၏နောက်ဆုံးဖြေကို \\boxed{} အတွင်းထည့်ပါ။"
+    evaluation={"lang": partial(lang_content, lang="my")}
+
+@register_task("pt_system")
+class PTTranslateTask(BaseLangTask):
+    system_message="Raciocine passo a passo e coloque sua resposta final dentro de \\boxed{}."
+    evaluation={"lang": partial(lang_content, lang="pt")}
+
+@register_task("yo_system")
+class YOTranslateTask(BaseLangTask):
+    system_message="Ṣe àlàyé ìdí rẹ̀ ní ìpele kọọkan kí o sì fi ìdáhùn ikẹhin rẹ sínú \\boxed{}."
+    evaluation={"lang": partial(lang_content, lang="yo")}
 
 @register_task("de_system")
 class DETranslateTask(BaseLangTask):
@@ -136,6 +171,61 @@ class THTranslateTask(BaseLangTask):
 class JPNTranslateTask(BaseLangTask):
     system_message="逐步推理并将您的最终答案放在 \\boxed{} 内。"
     evaluation={"lang": partial(lang_content, lang="zh")}
+
+@register_task("vi_system")
+class VITranslateTask(BaseLangTask):
+    system_message="Hãy suy nghĩ từng bước một và đặt câu trả lời cuối cùng của bạn vào trong \\boxed{}."
+    evaluation={"lang": partial(lang_content, lang="vi")}
+
+@register_task("ms_system")
+class MSTranslateTask(BaseLangTask):
+    system_message="Fikirkan langkah demi langkah dan letakkan jawapan akhir anda dalam \\boxed{}."
+    evaluation={"lang": partial(lang_content, lang="ms")}
+
+@register_task("jv_system")
+class JVTranslateTask(BaseLangTask):
+    system_message="Pikirake langkah demi langkah lan lebokake jawaban pungkasan sampeyan ing \\boxed{}."
+    evaluation={"lang": partial(lang_content, lang="jv")}
+
+@register_task("af_system")
+class AFTranslateTask(BaseLangTask):
+    system_message="Dink stap vir stap na en plaas jou finale antwoord binne \\boxed{}."
+    evaluation={"lang": partial(lang_content, lang="af")}
+
+@register_task("nl_system")
+class NLTranslateTask(BaseLangTask):
+    system_message="Denk stap voor stap na en plaats je uiteindelijke antwoord binnen \\boxed{}."
+    evaluation={"lang": partial(lang_content, lang="nl")}
+
+@register_task("gu_system")
+class GUTranslateTask(BaseLangTask):
+    system_message="પગલું દ્વારા પગલું કારણ આપો અને તમારા અંતિમ જવાબ \\boxed{} માં મૂકો."
+    evaluation={"lang": partial(lang_content, lang="gu")}
+
+@register_task("pa_system")
+class PATranslateTask(BaseLangTask):
+    system_message="ਕਦਮ ਦਰ ਕਦਮ ਸੋਚੋ ਅਤੇ ਆਪਣਾ ਅੰਤਿਮ ਜਵਾਬ \\boxed{} ਦੇ ਅੰਦਰ ਲਿਖੋ।"
+    evaluation={"lang": partial(lang_content, lang="pa")}
+
+@register_task("tr_system")
+class TRTranslateTask(BaseLangTask):
+    system_message="Adım adım düşünün ve son cevabınızı \\boxed{} içine yazın."
+    evaluation={"lang": partial(lang_content, lang="tr")}
+
+@register_task("tl_system")
+class TLTranslateTask(BaseLangTask):
+    system_message="Mag-isip nang hakbang-hakbang at ilagay ang iyong panghuling sagot sa loob ng \\boxed{}."
+    evaluation={"lang": partial(lang_content, lang="tl")}
+
+@register_task("he_system")
+class HETranslateTask(BaseLangTask):
+    system_message="תחשוב על זה שלב אחר שלב והכנס את התשובה הסופית שלך בתוך \\boxed{}."
+    evaluation={"lang": partial(lang_content, lang="he")}
+
+@register_task("vi_system")
+class VITranslateTask(BaseLangTask):
+    system_message="Hãy suy nghĩ từng bước một và đặt câu trả lời cuối cùng của bạn vào trong \\boxed{}."
+    evaluation={"lang": partial(lang_content, lang="vi")}
 
 
 # class BaseBoxTask(YevalTask):

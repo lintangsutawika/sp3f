@@ -46,9 +46,9 @@ LOCAL_DATA_PATH="${LOCAL_DATA_PATH:-$DEFAULT_DATA_PATH}"
 echo $LOCAL_DATA_PATH
 
 TASK_LIST=(
-    mgsm_
-    global_mmlu_
-    belebele_
+    # mgsm_
+    # global_mmlu_
+    # belebele_
     mt_math100_
 )
 
@@ -94,5 +94,5 @@ do
         #     --output_path ./data/coverage_scores/ $OTHER_ARGS
     done
 done
-pkill vllm
+# pkill vllm
 # sleep 2m

@@ -3,13 +3,13 @@
 #SBATCH --output=logs/%j.out
 #SBATCH --error=logs/%j.out
 #SBATCH --partition=general
-#SBATCH --gres=gpu:L40S:4
+#SBATCH --gres=gpu:L40S:8
 #SBATCH --nodes=1
 #SBATCH --time=2-00:00:00
-#SBATCH --mem=256G
+#SBATCH --mem=512G
 #SBATCH --cpus-per-task=64
 #SBATCH --ntasks-per-node=1
-#SBATCH --overcommit
+#SBATCH --exclude=babel-x9-32
 
 # . ./lang_boot/config/.sft_env
 . ./lang_boot/config/.env
@@ -53,7 +53,7 @@ torchrun \
     --nproc-per-node=$NUM_GPUS \
     --rdzv-endpoint=0.0.0.0:29392 \
     -m verl.trainer.fsdp_sft_trainer \
-        optim.lr=1e-5 \
+        optim.lr=1e-4 \
         data.train_files=${FULL_DATA_PATH}train.parquet \
         data.val_files=${FULL_DATA_PATH}test.parquet \
         data.multiturn.enable=True \
@@ -72,9 +72,9 @@ torchrun \
         trainer.project_name='lbr-lang_boot' \
         trainer.experiment_name=${RUN_NAME} \
         trainer.n_gpus_per_node=${NUM_GPUS} \
-        trainer.save_freq=100 \
+        trainer.save_freq=1000 \
         trainer.total_epochs=10 \
-        trainer.total_training_steps=500 \
+        trainer.total_training_steps=5000 \
         trainer.logger=['console','wandb'] \
         trainer.checkpoint.save_contents=['hf_model']
         # model.use_liger=True \

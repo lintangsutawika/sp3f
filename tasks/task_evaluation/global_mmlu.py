@@ -18,7 +18,8 @@ from yeval.response.math_responses import get_boxed_answer
 # from lang_boot.utils import math_eval_with_postprocessing
 from lang_boot.utils import (
     extract_text_content,
-    highest_loglikelihood
+    highest_loglikelihood,
+    highest_language_content,
     )
 
 path = os.path.dirname(__file__)
@@ -36,8 +37,11 @@ def eval_with_postprocessing(x, y):
     gold_letter, gold_answer = y.split("::")
 
     ans_score = 0.0
-    ans = get_boxed_answer(x)
-    ans = extract_text_content(ans).lower()
+    try:
+        ans = get_boxed_answer(x)
+        ans = extract_text_content(ans).lower()
+    except:
+        ans = ""
     if ans.lower() == gold_letter.lower():
         ans_score = 1.0
     elif ans.lower() == gold_answer.lower():
@@ -61,7 +65,8 @@ class JSONGSM8KTrainTask(GlobalMMLULiteTask):
     input_text=lambda x: x["input"]
     output_text=lambda x: x["output"]
     test_split="train"
-    preprocessing=highest_loglikelihood
+    # preprocessing=highest_loglikelihood
+    preprocessing=highest_language_content
 
 @register_task("global_mmlu_ar")
 class GlobalMMLU_AR_Task(GlobalMMLULiteTask):
@@ -126,4 +131,3 @@ class GlobalMMLU_YO_Task(GlobalMMLULiteTask):
 @register_task("global_mmlu_zh")
 class GlobalMMLU_ZH_Task(GlobalMMLULiteTask):
     data_name="zh"
-

@@ -63,7 +63,7 @@ do
     do
         yeval \
             --model ${MODEL_PATH}${MODEL}${MODEL_SUFFIX} \
-            --sample_args n=1,temperature=0.0,logprobs=True \
+            --sample_args "n=8,temperature=0.7,logprobs=True,top_p=0.8" \
             --task "${TASK}t//${PROMPT}" \
             --include_path lang_boot/tasks/ \
             --api_base "http://localhost:${PORT}/v1" \

@@ -5,27 +5,7 @@ from yeval.response.math_responses import get_boxed_answer
 
 from lingua import Language, LanguageDetectorBuilder
 
-languages = [
-    Language.ARABIC,
-    Language.BENGALI,
-    Language.GERMAN,
-    Language.SPANISH,
-    Language.FRENCH,
-    Language.HINDI,
-    Language.INDONESIAN,
-    Language.ITALIAN,
-    Language.JAPANESE,
-    Language.RUSSIAN,
-    Language.KOREAN,
-    Language.PORTUGUESE,
-    Language.SWAHILI,
-    Language.YORUBA,
-    Language.CHINESE,
-    Language.TELUGU,
-    Language.THAI,
-    Language.ENGLISH,
-    Language.CHINESE, 
-    ]
+languages = sorted(list(Language.all()))
 
 # detector = LanguageDetectorBuilder.from_all_languages(
 # detector = LanguageDetectorBuilder.from_languages(
@@ -76,13 +56,14 @@ def math_eval_with_postprocessing(x, y):
 
 def get_lang_score(prediction, lang="id", check_en=False, ignore_thinking=True):
 
-    if ignore_thinking:
-        if "<think>" in prediction and "</think>" in prediction:
-            prediction = prediction.split("</think>")[-1]
-
     lang_prob = 0.0
     en_lang_prob = 0.0
     try:
+
+        if ignore_thinking:
+            if "<think>" in prediction and "</think>" in prediction:
+                prediction = prediction.split("</think>")[-1]
+
         total_len = 0
         lang_dict = {}
         for detected_lang in detector[lang].detect_multiple_languages_of(prediction):
@@ -129,7 +110,7 @@ def highest_language_content(dataset):
         example["output"] = example["ground_truth"]
         return example
 
-    unused_columns = ['sample_id', 'total_step', 'task_step', 'step', 'current_loop', 'logprob', 'answer']
+    unused_columns = ['sample_id', 'total_step', 'task_step', 'step', 'current_loop', 'answer']
 
     dataset = dataset.map(get_most_likely_answer, remove_columns=unused_columns)
     return dataset
