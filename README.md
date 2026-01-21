@@ -2,6 +2,10 @@
 
 Official implementation of SP3F
 
+<p align="center">
+  <img width="1000" src="assets/sp3f_ffig.png">
+</p>
+
 by [Lintang Sutawika](), [Gokul Swamy](https://gokul.dev/), [Steven Wu](https://zstevenwu.com/), and [Graham Neubig](https://www.phontron.com/)
 
 [![arXiv](https://img.shields.io/badge/arXiv-2506.05294-df2a2a.svg?style=for-the-badge&logo=arxiv)]()
