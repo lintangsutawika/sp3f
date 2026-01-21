@@ -15,13 +15,11 @@ by [Lintang Sutawika](https://lintang.sutawika.com/), [Gokul Swamy](https://goku
 
 ## Setup
 
-Coming Soon
+We recommend using GPUs with atealst 48GB of memory. Our experiments were run on 8xL40s for a single training experiment. 
 
 ## Training SP3F
 
-Coming Soon
-
-### Training on new tasks
+To train a model with SP3F, we use the following command.
 
 ```
 WORK_PATH=/data/user_data/lsutawik/lbr-language_bootstrap_reasoning/
@@ -46,6 +44,10 @@ sbatch lang_boot/scripts/train_grpo.sh \
   -f compute_score_reward_acc_add_parseable_add_threshold \
   -j ${USE_JUDGE} -p ${USE_PRIVILEGED_INFO} -w {USE_RLVR} -i ${USE_API_JUDGE} -k ${API_MODEL}
 ```
+
+### Training on new tasks
+
+
 
 ## Citation
 
