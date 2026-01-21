@@ -58,8 +58,8 @@ from yeval.response.math_responses import get_boxed_answer
 import asyncio
 from openai import AsyncOpenAI, AsyncAzureOpenAI
 
-LLM_URL = os.environ.get('CMU_URL')
-LLM_KEY = os.environ.get('CMU_KEY')
+LLM_URL = os.environ.get('LLM_API_URL')
+LLM_KEY = os.environ.get('LLM_API_KEY')
 client = AsyncOpenAI(base_url=LLM_URL, api_key=LLM_KEY)
 # client = AsyncAzureOpenAI(
 #     azure_endpoint=LLM_URL,
