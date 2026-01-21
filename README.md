@@ -1,4 +1,4 @@
-# Lang Boot
+# Gained In Translation: Privileged Pairwise Judges Enhance Multilingual Reasoning
 
 Bootstrapping language model capability in non-English languages
 
