@@ -21,6 +21,21 @@ We recommend using GPUs with atealst 48GB of memory. Our experiments were run on
 
 You can download the data we used from [neulab/SP3F-Training-Data](https://huggingface.co/datasets/neulab/SP3F-Training-Data).
 
+### SFT
+
+```
+MODEL=Qwen/Qwen2.5-7B
+LANGUAGE=all
+DATA_PATH=...
+SAVE_PATH=...
+sbatch lang_boot/scripts/train_sft.sh \
+    -m ${MODEL} \
+    -l ${LANGUAGE} \
+    -f ${DATA_PATH} \
+    -s ${SAVE_PATH}
+```
+
+### GRPO
 To train a model with SP3F, we use the following command.
 
 ```
