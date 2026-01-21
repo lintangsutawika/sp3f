@@ -19,6 +19,8 @@ We recommend using GPUs with atealst 48GB of memory. Our experiments were run on
 
 ## Training SP3F
 
+You can download the data we used from [neulab/SP3F-Training-Data](https://huggingface.co/datasets/neulab/SP3F-Training-Data).
+
 To train a model with SP3F, we use the following command.
 
 ```
@@ -47,7 +49,13 @@ sbatch lang_boot/scripts/train_grpo.sh \
 
 ### Training on new tasks
 
+To use your own data.
 
+1. `solution`: English solution
+2. `translated_solution`: Equivalent to the English solution translated to a target language.
+3. `reward_model`: For the reward model to use. Consist of dict  with field `ground_truth`, example: `{"ground_truth": "2\\sqrt{3} - 1"}`
+4. `input`: dict that contains the system and user prompt. Example: `[{"role": "system", "content": ...}, {"role": "user", "content": ...}]`
+5. `extra_info`: 
 
 ## Citation
 
