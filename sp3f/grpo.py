@@ -211,13 +211,10 @@ class RayGRPOTrainer(CustomRayPPOTrainer):
         tgt_lang_name = LANGUAGE_CODE[tgt_lang_code]
 
         src_max_length = data.batch["attention_mask"].shape[-1]
-        # the maximum length is actually determined by the reward model itself
         max_length = self.config.get("max_length", src_max_length)
         if max_length is None:
             max_length = src_max_length
-        # print(f"max_length: {max_length}")
 
-        # system_message += "\nThink step by step before answering and output your answer in \\boxed{}."
         range_bs = list(range(data.batch.batch_size[0]))
 
         if (n_rollouts is not None) and (n_compare is not None):
@@ -230,42 +227,28 @@ class RayGRPOTrainer(CustomRayPPOTrainer):
                     n_compare = min(n_compare, len(_chunk))
                     pairwise_idx.extend([(i,j) for j in random.sample(_chunk, n_compare)])
 
+            # extract raw prompt
             chat_list = []
             for idx, (i, j) in enumerate(pairwise_idx):
-                # extract raw prompt
                 en_query = data.non_tensor_batch["query"][i]
                 en_response = data.non_tensor_batch["solution"][i]
 
+                # extract response
                 response_dict = {}
                 skip_judgement = 0
                 for idx_resp, x in zip(["A", "B"],[i, j]):
-                    # extract response
                     response_ids = data.batch["responses"][x]
                     response_length = response_ids.shape[-1]
                     valid_response_length = data.batch["attention_mask"][x][-response_length:].sum()
                     valid_response_ids = response_ids[:valid_response_length]
 
-                    # decode
-                    response = self.tokenizer.decode(valid_response_ids)
-                    # remove bos and eos
-                    response = response.replace(self.tokenizer.eos_token, "")
+                    response = self.tokenizer.decode(valid_response_ids) # decode
+                    response = response.replace(self.tokenizer.eos_token, "") # remove bos and eos
 
                     if tokenize:
-                        # if check_for_boxed_content:
                         box_content = get_boxed_answer(response)
-                        # box_content = get_answer(response)
                         if box_content != "None":
                             skip_judgement += 1
-                            # response = response.replace(f"\\boxed{{{box_content}}}", box_content)
-
-                    #     if "</think>" in response:
-                    #         thinking_part = response.split("</think>")[0] + "</think>"
-                    #     else:
-                    #         # thinking_part = "<think>" + "</think>"
-                    #         thinking_part = "<think>Empty Response</think>"
-                    #     thinking_part = "Empty Response"
-                    #     skip_judgement += 1
-                    #     response_dict[idx_resp] = "Empty Response"
                     else:
                         response_dict[idx_resp] = response
 
@@ -277,10 +260,6 @@ class RayGRPOTrainer(CustomRayPPOTrainer):
                     "B": response_dict["B"],
                 }
 
-                # if tokenize:
-                #     content = system_message(x) + "/no_think"
-                # else:
-                # content = system_message(x)
 
                 if skip_judgement == 2:
                     # Skip
@@ -291,24 +270,21 @@ class RayGRPOTrainer(CustomRayPPOTrainer):
                     chat_list.append([
                         {"role": "system", "content": system_message},
                         {"role": "user", "content": user_message(x)},
-                        # system_message(x)
                     ])
 
         else:
 
+            # extract raw prompt
             chat_list = []
             for idx in range_bs:
-                # extract raw prompt
                 query = data.batch["query"][idx]
                 response_ids = data.batch["responses"][idx]
                 response_length = response_ids.shape[-1]
                 valid_response_length = data.batch["attention_mask"][idx][-response_length:].sum()
                 valid_response_ids = response_ids[:valid_response_length]
 
-                # decode
-                response = self.tokenizer.decode(valid_response_ids)
-                # remove bos and eos
-                response = response.replace(self.tokenizer.eos_token, "")
+                response = self.tokenizer.decode(valid_response_ids) # decode
+                response = response.replace(self.tokenizer.eos_token, "") # remove bos and eos
                 thinking_part = response.split("</think>")[0] + "</think>"
 
                 chat_list.append([
@@ -336,10 +312,6 @@ class RayGRPOTrainer(CustomRayPPOTrainer):
         rm_attention_mask = []
         for chat in chat_list:
 
-            # if (n_rollouts is not None) and (n_compare is not None):
-            #     prompt_with_chat_template = chat
-            # else:
-            #     prompt_with_chat_template = self.tokenizer.apply_chat_template(chat, add_generation_prompt=False, tokenize=False)
             prompt_with_chat_template = self.tokenizer.apply_chat_template(chat, add_generation_prompt=False, tokenize=False)
             model_inputs = self.tokenizer(prompt_with_chat_template, return_tensors="pt", add_special_tokens=False)
             input_ids, attention_mask = postprocess_data(
@@ -347,11 +319,9 @@ class RayGRPOTrainer(CustomRayPPOTrainer):
                 attention_mask=model_inputs["attention_mask"],
                 max_length=max_length-1,
                 pad_token_id=self.tokenizer.pad_token_id,
-                # left_pad=False,  # right padding
-                left_pad=True,  # right padding
-                # truncation=self.config.get("truncation", "right"),
+                left_pad=True,
                 truncation=self.config.get("truncation", "left"),
-            )  # truncate from the right
+            )
 
             rm_input_ids.append(input_ids)
             rm_attention_mask.append(attention_mask)
@@ -525,42 +495,19 @@ class RayGRPOTrainer(CustomRayPPOTrainer):
                             n_rollouts = self.config.actor_rollout_ref.rollout.n
                             n_compare = self.config.actor_rollout_ref.rollout.compare
 
-                            # if self.global_steps == 1:
-                            #     print("batch size", batch.batch.batch_size[0])
-                            #     print("judge_batch size", judge_batch.batch.batch_size[0])
-                            #     print("n_rollouts size", n_rollouts)
-                            #     print("n_compare size", n_compare)
-
                             if self.config.trainer.get("use_api_judge", False):
-                                judge_sampling_params = {
-                                    # "stop": ["}"],
-                                    # "extra_body": {
-                                    #     "include_stop_str_in_output": True,
-                                    # #     "guided_choice": ["A}", "B}"],
-                                    # },
-                                }
+                                judge_sampling_params = {}
 
                                 async def get_judgement(idx, messages, **sampling_params):
                                     try:
                                         response = await client.chat.completions.create(
-                                            # model="Qwen/Qwen3-8B",
-                                            # model="azure/gpt-5-nano",
-                                            # model="azure/gpt-5-mini",
                                             model=self.config.trainer.get("judge_model", "azure/o4-mini"),
                                             messages=messages,
                                             **sampling_params,
                                         )
-                                        # print([resp.text for resp in response.choices][:10])
-                                        # return [resp.text for resp in response.choices]
                                         return [idx, response.choices[0].message.content]
                                     except Exception as e:
-                                        # print(f"Error in judgement: {e}")
                                         return [idx, ""]
-
-                                # async def run_api(all_messages, **sampling_params):
-                                #     tasks = [get_judgement(idx, messages, **sampling_params) for idx, messages in enumerate(all_messages)]
-                                #     results = await asyncio.gather(*tasks)
-                                #     return results
 
                                 def chunk(lst, n):
                                     """Yield successive n-sized chunks from lst."""
@@ -576,7 +523,6 @@ class RayGRPOTrainer(CustomRayPPOTrainer):
                                         await asyncio.sleep(10)  # to avoid rate limit
                                         results.sort(key=lambda x: x[0])
                                         all_results.extend([resp[1] for resp in results])
-                                        # all_results.extend(results)
                                     return all_results
 
                                 print("Using API judge")
@@ -588,12 +534,8 @@ class RayGRPOTrainer(CustomRayPPOTrainer):
                                     "detokenize": True,
                                     "temperature": 1.0,
                                     "do_sample": True,
-                                    # "stop": ["}"],
-                                    # "include_stop_str_in_output": True,
-                                    # "guided_choice": ["A}", "B}"],
                                 }
                                 judge_batch.meta_info["sampling_params"] = judge_sampling_params
-                                # judge_batch.meta_info["sampling_params"] = {}
                                 judge_output = self.actor_rollout_wg.generate_sequences(judge_batch)
                                 judge_responses = self.tokenizer.batch_decode(judge_output.batch["responses"], skip_special_tokens=True)
 
@@ -613,9 +555,7 @@ class RayGRPOTrainer(CustomRayPPOTrainer):
                             for (i, j), response in zip(pairwise_idx, judge_responses):
                                 try:
                                     winning_response = get_boxed_answer(response)
-                                    # winning_response = get_answer(response)
                                 except Exception as e:
-                                    # print(f"Error in getting boxed answer: {e}")
                                     winning_response = "None"
                                 if winning_response == "A":
                                     score = 1.0
@@ -654,8 +594,6 @@ class RayGRPOTrainer(CustomRayPPOTrainer):
                                 )
 
                             response_scores = torch.tensor([response_idx[i] for i in range(len(response_idx))], dtype=torch.float32).mean(dim=-1)
-                            # response_scores = torch.tensor([response_idx[i] for i in range(len(response_idx))], dtype=torch.float32).sum(dim=-1)
-                            # np.save(os.path.join(self.config.trainer.default_local_dir, f"judge_scores_{self.global_steps}.npy"), torch.tensor([response_idx[i] for i in range(len(response_idx))], dtype=torch.float32).cpu().numpy())
                             token_level_scores = _expand_to_token_level(batch, response_scores)
                             reward_tensor = token_level_scores.to("cpu")
                         else:
@@ -688,20 +626,6 @@ class RayGRPOTrainer(CustomRayPPOTrainer):
 
                         reward_tensor_from_fn, _ = compute_reward(batch, self.reward_fn)
                         if self.config.trainer.get("use_reward_fn", False):
-                            # Save the combined reward tensor for debugging/analysis
-                            # if self.config.trainer.get("debug", False):
-                            #     torch.save(
-                            #         reward_tensor_from_fn,
-                            #         os.path.join(self.config.trainer.default_local_dir, f"reward_tensor_from_fn_{self.global_steps}.pt")
-                            #     )
-
-                            #     torch.save(
-                            #         reward_tensor,
-                            #         os.path.join(self.config.trainer.default_local_dir, f"reward_tensor{self.global_steps}.pt")
-                            #     )
-
-                            # reward_tensor += reward_tensor_from_fn
-                            # reward_tensor = 0.5*reward_tensor + 0.5*reward_tensor_from_fn
                             reward_tensor = reward_tensor + reward_tensor_from_fn
                         else:
                             reward_tensor = reward_tensor_from_fn
@@ -758,15 +682,8 @@ class RayGRPOTrainer(CustomRayPPOTrainer):
                             batch = batch.union(values)
 
                     with marked_timer("adv", timing_raw, color="brown"):
-                        # we combine with rule-based rm
-                        # reward_extra_infos_dict: dict[str, list]
-                        # if self.config.reward_model.launch_reward_fn_async:
-                        #     reward_tensor, reward_extra_infos_dict = ray.get(future_reward)
                         reward_extra_infos_dict = {}
                         batch.batch["token_level_scores"] = reward_tensor
-
-                        # if reward_extra_infos_dict:
-                        #     batch.non_tensor_batch.update({k: np.array(v) for k, v in reward_extra_infos_dict.items()})
 
                         # compute rewards. apply_kl_penalty if available
                         if self.config.algorithm.use_kl_in_reward:
@@ -776,7 +693,6 @@ class RayGRPOTrainer(CustomRayPPOTrainer):
                             batch.batch["token_level_rewards"] = batch.batch["token_level_scores"]
 
                         # compute advantages, executed on the driver process
-
                         norm_adv_by_std_in_grpo = self.config.algorithm.get("norm_adv_by_std_in_grpo", True)  # GRPO adv normalization factor
 
                         batch = compute_advantage(
@@ -786,7 +702,6 @@ class RayGRPOTrainer(CustomRayPPOTrainer):
                             lam=self.config.algorithm.lam,
                             num_repeat=self.config.actor_rollout_ref.rollout.n,
                             norm_adv_by_std_in_grpo=norm_adv_by_std_in_grpo,
-                            # multi_turn=self.config.actor_rollout_ref.rollout.multi_turn.enable,
                             config=self.config.algorithm,
                         )
 
