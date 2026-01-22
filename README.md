@@ -1,12 +1,21 @@
 # Gained In Translation: Privileged Pairwise Judges Enhance Multilingual Reasoning
 
 Official implementation of SP3F
+by [Lintang Sutawika](https://lintang.sutawika.com/), [Gokul Swamy](https://gokul.dev/), [Zhiwei Steven Wu](https://zstevenwu.com/), and [Graham Neubig](https://www.phontron.com/)
 
 <p align="center">
   <img width="1000" src="assets/sp3f_ffig.png">
 </p>
 
-by [Lintang Sutawika](https://lintang.sutawika.com/), [Gokul Swamy](https://gokul.dev/), [Zhiwei Steven Wu](https://zstevenwu.com/), and [Graham Neubig](https://www.phontron.com/)
+We introduce Self-Play with Privileged Pairwise Feedback (SP3F), a two-stage framework for
+enhancing multilingual reasoning without any data in the target language(s). First, we supervise fine-tune (SFT) on translated versions of English question-answer pairs to raise base model correctness. Second, we perform RL with feedback from a pairwise judge in a self-play fashion. Our key insight is that we can use English reference responses during both SFT and RL by framing both learning problems in terms of translation. We use reference responses as data for translation during SFT and as privileged information for the pairwise judge during downstream RL. 
+
+<p align="center">
+  <img width="1000" src="assets/sp3f_pareto.png">
+</p>
+
+We apply SP3F on data from 18 languages and find that RLMs trained via SP3F outperform fully post-trained models such as Qwen2.5-7B-Instruct on both in-domain math and out-of-domain non-math tasks in a target language while using 1/8th as much training data. We also find particularly large improvements on lower-resourced languages and see better generalization to unseen languages. Our experiments show that privileged information is particularly helpful in improving detection of correct reasoning chains, even if the final answer is incorrect.
+
 
 [![arXiv](https://img.shields.io/badge/arXiv-2506.05294-df2a2a.svg?style=for-the-badge&logo=arxiv)]()
 [![HF Collection](https://img.shields.io/badge/%F0%9F%A4%97-Datasets-yellow?style=for-the-badge)](https://huggingface.co/collections/neulab/sp3f)
@@ -21,7 +30,11 @@ We recommend using GPUs with at least 48GB of memory. Our experiments were run o
 
 You can download the data we used from [neulab/SP3F-Training-Data](https://huggingface.co/datasets/neulab/SP3F-Training-Data).
 
-### SFT
+SP3F consists of 2 stages, an initial SFT stage and a GRPO stage with privileged information.
+
+### 1st Stage: SFT
+
+To start, we finetune a base model.
 
 ```
 MODEL=Qwen/Qwen2.5-7B
@@ -35,8 +48,8 @@ sbatch lang_boot/scripts/train_sft.sh \
     -s ${SAVE_PATH}
 ```
 
-### GRPO
-To train a model with SP3F, we use the following command.
+### 2nd Stage: GRPO with Privileged Information
+To train a model with SP3F, we use the following command. It is key to use a capable LLM-as-a-Judge. Our experiments use GPT-4o-Mini but other LLMs may work as well.
 
 ```
 WORK_PATH=/data/user_data/lsutawik/lbr-language_bootstrap_reasoning/
