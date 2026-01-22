@@ -131,14 +131,6 @@ def compute_score_reward_acc_add_lang_add_penalize_en(data_source, solution_str,
         penalize_english=True,
     )
 
-# def compute_score_reward_acc_mult_lang(data_source, solution_str, ground_truth, extra_info):
-#     return compute_score(
-#         data_source, solution_str, ground_truth, extra_info,
-#         use_lang=True,
-#         use_penalty=True,
-#         use_multiply=True,
-#     )
-
 def compute_score_reward_rand(data_source, solution_str, ground_truth, extra_info):
     return compute_score(
         data_source, solution_str, ground_truth, extra_info,

@@ -1,7 +1,0 @@
-hydra:
-  searchpath:
-    - pkg://verl/trainer/config
-
-defaults:
-  - evaluation
-  - _self_
