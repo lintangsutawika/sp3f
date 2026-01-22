@@ -15,7 +15,7 @@ by [Lintang Sutawika](https://lintang.sutawika.com/), [Gokul Swamy](https://goku
 
 ## Setup
 
-We recommend using GPUs with atealst 48GB of memory. Our experiments were run on 8xL40s for a single training experiment. 
+We recommend using GPUs with at least 48GB of memory. Our experiments were run on 8xL40s for a single training experiment. 
 
 ## Training SP3F
 
