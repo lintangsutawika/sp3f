@@ -11,18 +11,7 @@
 #SBATCH --ntasks-per-node=1
 #SBATCH --exclude=babel-x9-32
 
-# . ./lang_boot/config/.sft_env
 . ./lang_boot/config/.env
-
-# for LANGUAGE in id de es ja
-# do
-# sbatch lang_boot/scripts/train_sft.sh \
-#     -m Qwen/Qwen2.5-7B \
-#     -l ${LANGUAGE} \
-#     -t deepscaler_train \
-#     -f /data/user_data/lsutawik/lbr-language_bootstrap_reasoning/data/deepscaler-${LANGUAGE}-q2.5-7b/ \
-#     -s /data/user_data/lsutawik/lbr-language_bootstrap_reasoning/ \
-# done
 
 while getopts ":s:m:l:t:d:v:r:o:f:" opt; do
   case ${opt} in
@@ -35,7 +24,7 @@ while getopts ":s:m:l:t:d:v:r:o:f:" opt; do
     o ) OTHER_ARGS=$OPTARG;;
     s ) SAVE_MODEL_PATH=$OPTARG;;
     f ) FULL_DATA_PATH=$OPTARG;;
-    # \? ) echo "Usage: cmd [-u] [-p]";;
+    \? ) echo "Usage: cmd [-u] [-p]";;
   esac
 done
 
