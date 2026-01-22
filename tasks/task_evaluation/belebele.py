@@ -6,7 +6,7 @@ from yeval.task import register_task, YevalTask
 from yeval.log.usage import log_logprob
 from yeval.response.math_responses import get_boxed_answer
 
-from lang_boot.utils import (
+from sp3f.utils import (
     extract_text_content,
     highest_loglikelihood,
     highest_language_content,

@@ -5,7 +5,7 @@ from functools import partial
 from yeval.task import register_task, YevalTask
 from yeval.log.usage import log_logprob
 
-from lang_boot.utils import get_lang_score
+from sp3f.utils import get_lang_score
 
 def lang_content(x, y, lang="id"):
     _, lang_prob = get_lang_score(x, lang=lang)

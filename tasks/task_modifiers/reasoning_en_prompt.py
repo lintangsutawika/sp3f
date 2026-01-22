@@ -4,14 +4,13 @@ from yeval.response.math_responses import get_boxed_answer
 from yeval.task import register_task, YevalTask
 from yeval.log.usage import log_logprob
 
-from lang_boot.utils import get_lang_score
+from sp3f.utils import get_lang_score
 
 def lang_content(x, y, lang="id"):
     _, lang_prob = get_lang_score(x, lang=lang)
     return lang_prob
 
 class BaseLangTask(YevalTask):
-    # system_message="Think about it step by step and give your answer at the end in \\boxed{}."
     sample_agg_fn={"lang": lambda x: x}
     logging=log_logprob
 

@@ -15,17 +15,14 @@ from yeval.metrics import math_eval
 from yeval.log.usage import log_logprob
 from yeval.response.math_responses import get_boxed_answer
 
-# from lang_boot.utils import math_eval_with_postprocessing
-from lang_boot.utils import (
+from sp3f.utils import (
     extract_text_content,
-    highest_loglikelihood,
     highest_language_content,
     )
 
 path = os.path.dirname(__file__)
 
 def input_text(x):
-    # return f"{x['question']}\nA){x['option_a']}\nB){x['option_b']}\nC){x['option_c']}\nD){x['option_d']}\n"
     return f"{x['question']}\n\nA) {x['option_a']}\nB) {x['option_b']}\nC) {x['option_c']}\nD) {x['option_d']}\n\n"
 
 def output_text(x):
@@ -65,7 +62,6 @@ class JSONGSM8KTrainTask(GlobalMMLULiteTask):
     input_text=lambda x: x["input"]
     output_text=lambda x: x["output"]
     test_split="train"
-    # preprocessing=highest_loglikelihood
     preprocessing=highest_language_content
 
 @register_task("global_mmlu_ar")

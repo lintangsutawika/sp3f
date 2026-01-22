@@ -7,7 +7,7 @@ from functools import partial
 from yeval.task import register_task, YevalTask
 from yeval.log.usage import log_logprob
 
-from lang_boot.utils import (
+from sp3f.utils import (
     highest_loglikelihood,
     highest_language_content,
     math_eval_with_postprocessing,
