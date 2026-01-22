@@ -1,0 +1,23 @@
+hydra:
+  searchpath:
+    - pkg://verl/trainer/config
+
+defaults:
+  - ppo_trainer
+  - _self_
+
+actor_rollout_ref:
+  # actor configs
+  actor:
+    # checkpoint configs
+    checkpoint:
+      # save_contents: ['model', 'hf_model', 'optimizer', 'extra']
+      save_contents: ['hf_model']
+  rollout:
+    val_kwargs:
+      # sampling parameters for validation
+      top_k: -1 # 0 for hf rollout, -1 for vllm rollout
+      top_p: 0.8
+      temperature: 0.7
+      n: 1
+      do_sample: False # default eager for validation
