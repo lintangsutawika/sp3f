@@ -34,7 +34,7 @@ SP3F consists of 2 stages, an initial SFT stage and a GRPO stage with privileged
 
 ### 1st Stage: SFT
 
-To start, we finetune a base model.
+To start, we finetune a base model. This is to align the model with a starting distribution that mimics intended behaviours such as proper format and target language to some degree.
 
 ```
 MODEL=Qwen/Qwen2.5-7B
@@ -49,6 +49,7 @@ sbatch lang_boot/scripts/train_sft.sh \
 ```
 
 ### 2nd Stage: GRPO with Privileged Information
+
 To train a model with SP3F, we use the following command. It is key to use a capable LLM-as-a-Judge. Our experiments use GPT-4o-Mini but other LLMs may work as well.
 
 ```
