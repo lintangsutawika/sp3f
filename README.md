@@ -79,6 +79,56 @@ sbatch lang_boot/scripts/train_grpo.sh \
 
 ### 💬 Adding new languages
 
+To add more languages, you can use the our scripts to translate English data to your target language.
+#### Register a translation prompt. 
+
+Add a new class in `tasks/translate_prompt.py` this will look something like this. Register it using `<Language ID>_translate` format. We will use the language id to identify which prompt to use during translation.
+
+```
+@register_task("id_translate")
+class IDTranslateTask(BaseTranslateTask):
+    system_message="""\
+You are a helpful assistant that can translate from English to Indonesian. \
+Respond directly after \"Indonesian Translation:\".\
+"""
+    user_message=lambda x: "English Text:\n\n"+f"{x}"+"Indonesian Translation:\n\n"
+    evaluation={"lang": partial(lang_content, lang="id")}
+```
+
+#### Translate Queries and Solutions
+
+Setup your LLM which could be a locally hosted one or an API model and set their base_url and key in LLM_URL and LLM_KEY in `.env` the translation scripts will look for this file.
+
+To translate queries
+```
+bash sp3f/scripts/reasoning_translate_queries.sh \
+            -m azure/gpt-5-nano \
+            -t deepscaler_train \
+            -l ${LANGUAGE} \
+            -y ${SAVE_PATH}
+```
+
+To translate solutions
+```
+bash sp3f/scripts/reasoning_translate_solutions.sh \
+            -m azure/gpt-5-nano \
+            -t deepscaler_train \
+            -l ${LANGUAGE} \
+            -y ${SAVE_PATH}
+```
+
+#### Construct Training Dataset
+
+With the translated queries and solutions we can construct the training data.
+```
+uv run construct_dataset.py \
+        --data_path ${SAVE_PATH} \
+        --output_path ${OUTPUT_PATH} \
+        --lang ${LANGUAGE} \
+        --use_en_solution \
+        --use_translated_solution
+```
+
 ### 📝 Training on custom tasks
 
 To use your own data.

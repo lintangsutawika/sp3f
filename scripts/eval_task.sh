@@ -1,6 +1,7 @@
 #!/bin/bash
 
-. ./lang_boot/config/.env
+# Environment Variables
+. .env
 
 while getopts ":a:s:m:l:r:o:p:t:e:d:" opt; do
   case ${opt} in

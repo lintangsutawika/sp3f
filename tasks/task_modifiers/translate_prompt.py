@@ -19,7 +19,6 @@ def get_translation(x):
             return match.group(1).strip()
         elif "English Translation:" in x:
             return x.split("English Translation:")[-1].strip()
-        # return ""
         else:
             return x
     except:
@@ -30,12 +29,8 @@ class BaseTranslateTask(YevalTask):
     sampling_args={
         "n": 4,
         "temperature": 1.0,
-        # "logprobs": True,
-        # "stop": ["```"],
-        # "extra_body": {"include_stop_str_in_output": True}
         }
     sample_agg_fn={"lang": lambda x: x}
-    # logging=log_logprob
 
 @register_task("ar_translate")
 class ARTranslateTask(BaseTranslateTask):
