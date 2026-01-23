@@ -1,3 +1,4 @@
+```
 sp3f
 ├── config
 │   └── grpo_trainer.yaml           # Configuration yaml
@@ -8,3 +9,4 @@ sp3f
 ├── main_grpo.py                    # grpo training launcher
 ├── README.md
 └── utils.py                        # frequently used utilities
+```
