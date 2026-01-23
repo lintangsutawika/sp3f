@@ -1,6 +1,7 @@
 # 🏖️ Gained In Translation: Privileged Pairwise Judges Enhance Multilingual Reasoning
 
 Official implementation of SP3F
+
 by [Lintang Sutawika](https://lintang.sutawika.com/), [Gokul Swamy](https://gokul.dev/), [Zhiwei Steven Wu](https://zstevenwu.com/), and [Graham Neubig](https://www.phontron.com/)
 
 <p align="center">
