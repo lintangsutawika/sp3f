@@ -32,7 +32,7 @@ You can download the data we used from [neulab/SP3F-Training-Data](https://huggi
 
 SP3F consists of 2 stages, an initial SFT stage and a GRPO stage with privileged information.
 
-### 1st Stage: SFT
+### 1️⃣ SFT
 
 To start, we finetune a base model. This is to align the model with a starting distribution that mimics intended behaviours such as proper format and target language to some degree.
 
@@ -48,7 +48,7 @@ sbatch lang_boot/scripts/train_sft.sh \
     -s ${SAVE_PATH}
 ```
 
-### 2nd Stage: GRPO with Privileged Information
+### 2️⃣ GRPO with Privileged Information
 
 To train a model with SP3F, we use the following command. It is key to use a capable LLM-as-a-Judge. Our experiments use GPT-4o-Mini but other LLMs may work as well.
 
@@ -76,7 +76,9 @@ sbatch lang_boot/scripts/train_grpo.sh \
   -j ${USE_JUDGE} -p ${USE_PRIVILEGED_INFO} -w {USE_RLVR} -i ${USE_API_JUDGE} -k ${API_MODEL}
 ```
 
-### Training on new tasks
+### 💬 Adding new languages
+
+### 📝 Training on custom tasks
 
 To use your own data.
 
