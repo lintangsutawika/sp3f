@@ -1,4 +1,4 @@
-# Gained In Translation: Privileged Pairwise Judges Enhance Multilingual Reasoning
+# 🏖️ Gained In Translation: Privileged Pairwise Judges Enhance Multilingual Reasoning
 
 Official implementation of SP3F
 by [Lintang Sutawika](https://lintang.sutawika.com/), [Gokul Swamy](https://gokul.dev/), [Zhiwei Steven Wu](https://zstevenwu.com/), and [Graham Neubig](https://www.phontron.com/)
@@ -22,11 +22,11 @@ We apply SP3F on data from 18 languages and find that RLMs trained via SP3F outp
 [![License](https://img.shields.io/github/license/TRI-ML/prismatic-vlms?style=for-the-badge)](LICENSE)
 [![Summary](https://img.shields.io/badge/ -Summary-1DA1F2?logo=x&logoColor=white&labelColor=gray&style=for-the-badge)]()
 
-## Setup
+## ⚙️ Setup
 
 We recommend using GPUs with at least 48GB of memory. Our experiments were run on 8xL40s for a single training experiment. 
 
-## Training SP3F
+## 🏋🏽 Training SP3F
 
 You can download the data we used from [neulab/SP3F-Training-Data](https://huggingface.co/datasets/neulab/SP3F-Training-Data).
 
@@ -85,12 +85,12 @@ To use your own data.
 4. `input`: dict that contains the system and user prompt. Example: `[{"role": "system", "content": ...}, {"role": "user", "content": ...}]`
 5. `extra_info`: Auxilary information used for the RLVR, `{"ground_truth": "2\\sqrt{3} - 1", "lang": <Language Code>}`
 
-## Citation
+## 📚 Citation
 
 If you found this work useful, please cite us by using the following bibtex
 ```
 ```
 
-## Acknowlegedments
+## 🎉 Acknowlegedments
 
 This codebase heavily uses [Verl](https://github.com/volcengine/verl).
