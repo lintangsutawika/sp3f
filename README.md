@@ -11,7 +11,7 @@ We introduce Self-Play with Privileged Pairwise Feedback (SP3F), a two-stage fra
 enhancing multilingual reasoning without any data in the target language(s). First, we supervise fine-tune (SFT) on translated versions of English question-answer pairs to raise base model correctness. Second, we perform RL with feedback from a pairwise judge in a self-play fashion. Our key insight is that we can use English reference responses during both SFT and RL by framing both learning problems in terms of translation. We use reference responses as data for translation during SFT and as privileged information for the pairwise judge during downstream RL. 
 
 <p align="center">
-  <img width="1000" src="assets/sp3f_pareto.png">
+  <img width="500" src="assets/sp3f_pareto.png">
 </p>
 
 We apply SP3F on data from 18 languages and find that RLMs trained via SP3F outperform fully post-trained models such as Qwen2.5-7B-Instruct on both in-domain math and out-of-domain non-math tasks in a target language while using 1/8th as much training data. We also find particularly large improvements on lower-resourced languages and see better generalization to unseen languages. Our experiments show that privileged information is particularly helpful in improving detection of correct reasoning chains, even if the final answer is incorrect.
