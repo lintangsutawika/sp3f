@@ -55,7 +55,7 @@ To start, we finetune a base model. This is to align the model with a starting d
 ```
 MODEL=Qwen/Qwen2.5-7B
 LANGUAGE=all
-DATA_PATH=...
+DATA_PATH=/absolute/path/to/SP3F-Training-Data/
 SAVE_PATH=...
 sbatch scripts/train_sft.sh \
     -m ${MODEL} \
@@ -73,7 +73,7 @@ TASK=deepscaler_train
 LANGUAGE=all
 MODEL=...
 RUN_NAME=r_privileged_API_GPT_4o_Mini-r_acc-r_threshold-r_parsable
-DATA_PATH=...
+DATA_PATH=/absolute/path/to/SP3F-Training-Data/
 SAVE_PATH=...
 USE_JUDGE=True
 USE_PRIVILEGED_INFO=True
