@@ -164,6 +164,47 @@ To use your own data.
 4. `input`: dict that contains the system and user prompt. Example: `[{"role": "system", "content": ...}, {"role": "user", "content": ...}]`
 5. `extra_info`: Auxilary information used for the RLVR, `{"ground_truth": "2\\sqrt{3} - 1", "lang": <Language Code>}`
 
+
+### Evaluating models
+
+To evaluate trained or baseline models, we use the following scripts. Each run processes a single language for all 4 tasks, so we will need to iterate over all of the languages. Tip: We use SLURM which allows us to parallelize the evals for each language.
+
+```
+# Path to a local model HF checkpoint. HF model names such as Qwen/Qwen2.5-7B also work.
+MODEL_PATH=...
+# Simplified or specific name or your model. Will default to MODEL_PATH if not set.
+MODEL_ALIAS=...
+SAVE_PATH=...
+for LANGUAGE in ar bn de en es fr hi id it ja ko pt ru sw te th yo zh
+do
+    bash scripts/eval_task.sh \
+        -m ${MODEL_PATH} \
+        -a ${MODEL_ALIAS} \
+        -s ${SAVE_PATH} \
+        -l ${LANGUAGE}
+done
+```
+
+Specifically for `MT MATH 100` in Chinese (zh). The dataset features distinct Mainland Chinese (cn) and Taiwanese Chinese (tw). We report the averaged score over these runs in our paper. To evaluate them, use a specific script
+```
+# Path to a local model HF checkpoint. HF model names such as Qwen/Qwen2.5-7B also work.
+MODEL_PATH=...
+# Simplified or specific name or your model. Will default to MODEL_PATH if not set.
+MODEL_ALIAS=...
+SAVE_PATH=...
+bash scripts/eval_task_math100_zh.sh \
+    -m ${MODEL_PATH} \
+    -a ${MODEL_ALIAS} \
+    -s ${SAVE_PATH} \
+    -l ${LANGUAGE}
+```
+
+The output eval will be an `output.jsonl` with the following fields:
+1. `lang`: Percentage of the response is in the target language (We then convert this to language fidelity of 0/1 if this percentage is equal or greater than a threshold.
+2. `accuracy`: Whether the final answer is correct according to the ground truth.
+3. `ground_truth`: The correct answer from the dataset.
+4. `answer`: Model response.
+
 ## 📚 Citation
 
 If you found this work useful, please cite us by using the following bibtex
