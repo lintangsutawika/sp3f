@@ -69,7 +69,6 @@ sbatch scripts/train_sft.sh \
 To train a model with SP3F, we use the following command. It is key to use a capable LLM-as-a-Judge. Our experiments use GPT-4o-Mini but other LLMs may work as well.
 
 ```
-RUN_NUMBER=0
 TASK=deepscaler_train
 LANGUAGE=all
 MODEL=...
