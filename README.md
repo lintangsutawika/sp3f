@@ -42,6 +42,9 @@ export LLM_API_KEY=...
 ## 🏋🏽 Training SP3F
 
 You can download the data we used from [neulab/SP3F-Training-Data](https://huggingface.co/datasets/neulab/SP3F-Training-Data).
+```
+git clone https://huggingface.co/datasets/neulab/SP3F-Training-Data
+```
 
 SP3F consists of 2 stages, an initial SFT stage and a GRPO stage with privileged information.
 
