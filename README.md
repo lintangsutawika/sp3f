@@ -39,6 +39,8 @@ export LLM_API_URL=...
 export LLM_API_KEY=...
 ```
 
+Our scripts uses [uv](https://docs.astral.sh/uv/) to handle dependancies. All dependancies are defined in `pyproject.toml`
+
 ## 🏋🏽 Training SP3F
 
 You can download the data we used from [neulab/SP3F-Training-Data](https://huggingface.co/datasets/neulab/SP3F-Training-Data).
@@ -144,7 +146,7 @@ bash scripts/reasoning_translate_solutions.sh \
 
 With the translated queries and solutions we can construct the training data.
 ```
-uv run construct_dataset.py \
+uv run --isolated construct_dataset.py \
         --data_path ${SAVE_PATH} \
         --output_path ${OUTPUT_PATH} \
         --lang ${LANGUAGE} \
