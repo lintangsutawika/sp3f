@@ -87,7 +87,7 @@ sbatch scripts/train_grpo.sh \
   -m ${MODEL} -l ${LANGUAGE} -t ${TASK} \
   -z ${DATA_PATH} -s ${SAVE_PATH} \
   -f compute_score_reward_acc_add_parseable_add_threshold \
-  -j ${USE_JUDGE} -p ${USE_PRIVILEGED_INFO} -w {USE_RLVR} -i ${USE_API_JUDGE} -k ${API_MODEL}
+  -j ${USE_JUDGE} -p ${USE_PRIVILEGED_INFO} -w ${USE_RLVR} -i ${USE_API_JUDGE} -k ${API_MODEL}
 ```
 
 ### 💬 Adding new languages
