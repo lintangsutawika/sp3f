@@ -165,7 +165,7 @@ To use your own data.
 5. `extra_info`: Auxilary information used for the RLVR, `{"ground_truth": "2\\sqrt{3} - 1", "lang": <Language Code>}`
 
 
-### Evaluating models
+### 🔍 Evaluating models
 
 To evaluate trained or baseline models, we use the following scripts. Each run processes a single language for all 4 tasks, so we will need to iterate over all of the languages. Tip: We use SLURM which allows us to parallelize the evals for each language.
 
