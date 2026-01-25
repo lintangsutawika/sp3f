@@ -1,6 +1,6 @@
-# 🏖️ Gained In Translation: Privileged Pairwise Judges Enhance Multilingual Reasoning
+# 🏖️ SP3F: Self-Play with Privileged Pairwise Feedback
 
-Official implementation of SP3F
+Official implementation of SP3F, method from "Gained In Translation: Privileged Pairwise Judges Enhance Multilingual Reasoning".
 
 by [Lintang Sutawika](https://lintang.sutawika.com/), [Gokul Swamy](https://gokul.dev/), [Zhiwei Steven Wu](https://zstevenwu.com/), and [Graham Neubig](https://www.phontron.com/)
 
