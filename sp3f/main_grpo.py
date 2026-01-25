@@ -22,7 +22,7 @@ import hydra
 import ray
 from omegaconf import OmegaConf
 
-from lang_boot.grpo import CustomRayPPOTrainer, RayGRPOTrainer
+from sp3f.grpo import CustomRayPPOTrainer, RayGRPOTrainer
 from verl.trainer.ppo.reward import load_reward_manager
 
 
@@ -117,7 +117,6 @@ class TaskRunner:
             raise NotImplementedError
 
         from verl.trainer.ppo.ray_trainer import ResourcePoolManager, Role
-        # from lang_boot.grpo import ResourcePoolManager, Role
 
         # Map roles to their corresponding remote worker classes.
         role_worker_mapping = {
@@ -145,7 +144,7 @@ class TaskRunner:
         if config.reward_model.enable:
             if config.reward_model.strategy in ["fsdp", "fsdp2"]:
                 # from verl.workers.fsdp_workers import RewardModelWorker
-                from lang_boot.reward_model import SentenceRewardModelWorker as RewardModelWorker
+                from sp3f.reward_model import SentenceRewardModelWorker as RewardModelWorker
             elif config.reward_model.strategy == "megatron":
                 from verl.workers.megatron_workers import RewardModelWorker
             else:
