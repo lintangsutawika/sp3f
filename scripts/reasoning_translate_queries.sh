@@ -2,8 +2,8 @@
 
 # Environment Variables
 # Put your OpenAI or other LLM API credentials in the .env file
-# LLM_URL=... this is the base URL for the LLM API
-# LLM_KEY=... this is the API key for the LLM API
+# LLM_API_URL=... this is the base URL for the LLM API
+# LLM_API_KEY=... this is the API key for the LLM API
 . .env
 
 while getopts ":m:x:y:l:t:o:" opt; do
@@ -23,9 +23,9 @@ MODEL_ALIAS=$(echo $MODEL | sed 's/\//-/g')
 yeval \
     --model ${MODEL_PATH}$MODEL \
     --task ${TASK}_problemt//${LANGUAGE}_translate \
-    --include_path lang_boot/tasks/ \
-    --api_base $LLM_URL \
-    --api_key $LLM_KEY \
+    --include_path tasks/ \
+    --api_base ${LLM_API_URL} \
+    --api_key ${LLM_API_KEY} \
     --run_name $TASK+$LANGUAGE+translated+queries \
     --sample_args n=1,temperature=1.0 \
     --trust_remote_code \
