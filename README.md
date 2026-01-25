@@ -114,18 +114,24 @@ Setup your LLM which could be a locally hosted one or an API model and set their
 
 To translate queries
 ```
+MODEL=azure/gpt-5-nano # We use GPT-5-Nano for our translation
+LANGUAGE=id # Language code 
+SAVE_PATH=...
 bash scripts/reasoning_translate_queries.sh \
-            -m azure/gpt-5-nano \
             -t deepscaler_train \
+            -m ${MODEL} \
             -l ${LANGUAGE} \
             -y ${SAVE_PATH}
 ```
 
 To translate solutions
 ```
+MODEL=azure/gpt-5-nano # We use GPT-5-Nano for our translation
+LANGUAGE=id # Language code 
+SAVE_PATH=...
 bash scripts/reasoning_translate_solutions.sh \
-            -m azure/gpt-5-nano \
             -t deepscaler_train \
+            -m ${MODEL} \
             -l ${LANGUAGE} \
             -y ${SAVE_PATH}
 ```
