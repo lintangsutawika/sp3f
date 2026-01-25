@@ -170,4 +170,4 @@ If you found this work useful, please cite us by using the following bibtex
 
 ## 🎉 Acknowlegedments
 
-This codebase heavily uses [Verl](https://github.com/volcengine/verl).
+Our codebase utilizes [Verl](https://github.com/volcengine/verl).
