@@ -7,9 +7,7 @@ from sklearn.metrics import mean_squared_error
 
 from yeval.metrics import math_eval
 from yeval.response.math_responses import get_boxed_answer
-from lang_boot.utils import get_lang_score
-
-from lang_boot.reward_functions.repetition_penalty import repetition_penalty
+from sp3f.utils import get_lang_score
 
 from yeval.task import TASK_LIST
 from yeval.utils import import_modules
@@ -18,10 +16,9 @@ path = os.path.dirname(__file__)
 import_modules(os.path.join(path, "../../tasks/"))
 
 # Make dict for all tasks,
-eval_tasks = ["mgsm", "global_mmlu", "belebele", "mt_aime2024", "mt_math100"]
+eval_tasks = ["mgsm", "global_mmlu", "belebele", "mt_math100"]
 
 eval_fn = {
-    "math500": TASK_LIST["math500"]().eval,
     **{task: TASK_LIST[f"{task}_en"]().eval for task in eval_tasks}
 }
 
@@ -76,21 +73,11 @@ def compute_score(
     if penalize_english:
         reward -= en_lang_score
 
-    penalty = 0
-    N_gram_sizes = [2, 3, 4, 5]
-    for N in N_gram_sizes:
-        penalty += repetition_penalty(solution_str, window_size=N)
-    penalty /= len(N_gram_sizes)
-
-    if use_penalty and (lang != "en"):
-        reward -= penalty
-
     return {
         "data_source": extra_info["task"],
         "score": reward,
         "task_score": ans_score,
         "lang_score": lang_score,
-        "repetition_penalty": penalty,
         "use_lang": use_lang,
         "use_penalty": use_penalty,
         "use_random": use_random,
