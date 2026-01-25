@@ -27,6 +27,18 @@ We apply SP3F on data from 18 languages and find that RLMs trained via SP3F outp
 
 We recommend using GPUs with at least 48GB of memory. Our experiments were run on 8xL40s for a single training experiment. 
 
+To get started, 
+```
+git clone https://github.com/lintangsutawika/SP3F.git
+cd SP3F/
+```
+
+And setup an `.env` to hold API keys for `LLM_API_URL` and `LLM_API_KEY` to configure the llm-judge used to train SP3F.
+```
+export LLM_API_URL=...
+export LLM_API_KEY=...
+```
+
 ## 🏋🏽 Training SP3F
 
 You can download the data we used from [neulab/SP3F-Training-Data](https://huggingface.co/datasets/neulab/SP3F-Training-Data).
@@ -42,7 +54,7 @@ MODEL=Qwen/Qwen2.5-7B
 LANGUAGE=all
 DATA_PATH=...
 SAVE_PATH=...
-sbatch lang_boot/scripts/train_sft.sh \
+sbatch scripts/train_sft.sh \
     -m ${MODEL} \
     -l ${LANGUAGE} \
     -f ${DATA_PATH} \
@@ -69,7 +81,7 @@ USE_API_JUDGE=True
 API_MODEL=... (OpenAI API-compatible model)
 export LLM_API_URL=...
 export LLM_API_KEY=...
-sbatch lang_boot/scripts/train_grpo.sh \
+sbatch scripts/train_grpo.sh \
   -r ${RUN_NAME} \
   -m ${MODEL} -l ${LANGUAGE} -t ${TASK} \
   -z ${DATA_PATH} -s ${SAVE_PATH} \
@@ -101,7 +113,7 @@ Setup your LLM which could be a locally hosted one or an API model and set their
 
 To translate queries
 ```
-bash sp3f/scripts/reasoning_translate_queries.sh \
+bash scripts/reasoning_translate_queries.sh \
             -m azure/gpt-5-nano \
             -t deepscaler_train \
             -l ${LANGUAGE} \
@@ -110,7 +122,7 @@ bash sp3f/scripts/reasoning_translate_queries.sh \
 
 To translate solutions
 ```
-bash sp3f/scripts/reasoning_translate_solutions.sh \
+bash scripts/reasoning_translate_solutions.sh \
             -m azure/gpt-5-nano \
             -t deepscaler_train \
             -l ${LANGUAGE} \
