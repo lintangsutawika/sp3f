@@ -117,11 +117,13 @@ To translate queries
 MODEL=azure/gpt-5-nano # We use GPT-5-Nano for our translation
 LANGUAGE=id # Language code 
 SAVE_PATH=...
+MAX_SAMPLES=5000 # Number of samples to be translated
 bash scripts/reasoning_translate_queries.sh \
             -t deepscaler_train \
             -m ${MODEL} \
             -l ${LANGUAGE} \
-            -y ${SAVE_PATH}
+            -y ${SAVE_PATH} \
+            -o "--n_samples ${MAX_SAMPLES}"
 ```
 
 To translate solutions
@@ -129,11 +131,13 @@ To translate solutions
 MODEL=azure/gpt-5-nano # We use GPT-5-Nano for our translation
 LANGUAGE=id # Language code 
 SAVE_PATH=...
+MAX_SAMPLES=5000 # Number of samples to be translated
 bash scripts/reasoning_translate_solutions.sh \
             -t deepscaler_train \
             -m ${MODEL} \
             -l ${LANGUAGE} \
-            -y ${SAVE_PATH}
+            -y ${SAVE_PATH} \
+            -o "--n_samples ${MAX_SAMPLES}"
 ```
 
 #### Construct Training Dataset
