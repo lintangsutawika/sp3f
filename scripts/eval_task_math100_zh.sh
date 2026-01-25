@@ -3,14 +3,16 @@
 # Environment Variables
 . .env
 
-while getopts ":a:m:r:o:p:t:d:" opt; do
+while getopts ":a:s:m:r:o:p:t:e:d:" opt; do
   case ${opt} in
     a ) MODEL_ALIAS=$OPTARG;;
+    s ) MODEL_PATH=$OPTARG;;
     m ) MODEL=$OPTARG;;
     r ) PORT=$OPTARG;;
     o ) OTHER_ARGS=$OPTARG;;
     p ) PP_SIZE=$OPTARG;;
     t ) TP_SIZE=$OPTARG;;
+    e ) MODEL_SUFFIX=$OPTARG;;
     d ) SAVE_PATH=$OPTARG;;
     \? ) echo "Usage: cmd [-u] [-p]";;
   esac
@@ -23,12 +25,10 @@ PORT="${PORT:-$(( $RANDOM_PORT ))}"
 PP_SIZE="${PP_SIZE:-1}"
 TP_SIZE="${TP_SIZE:-1}"
 SAVE_PATH="${SAVE_PATH:-./outputs/}"
-
+LANGUAGE="zh"
 TASK_LIST=(
-    mgsm_$LANGUAGE
-    mt_math100_$LANGUAGE
-    belebele_$LANGUAGE
-    global_mmlu_$LANGUAGE
+    mt_math100_$LANGUAGE-tw
+    mt_math100_$LANGUAGE-cn
 )
 
 PROMPT_LANG_LIST=(
@@ -36,7 +36,7 @@ PROMPT_LANG_LIST=(
 )
 
 MAX_TOKEN=2048
-vllm serve ${MODEL} \
+vllm serve ${MODEL_PATH}${MODEL}${MODEL_SUFFIX} \
     --port ${PORT} \
     --max_model_len ${MAX_TOKEN} \
     --pipeline_parallel_size ${PP_SIZE} \
@@ -48,7 +48,7 @@ do
     for PROMPT in ${PROMPT_LANG_LIST[@]}
     do
         yeval \
-            --model ${MODEL} \
+            --model ${MODEL_PATH}${MODEL}${MODEL_SUFFIX} \
             --sample_args "n=8,temperature=0.7,logprobs=True,top_p=0.8" \
             --task "${TASK}t//${PROMPT}" \
             --include_path tasks/ \
@@ -56,5 +56,8 @@ do
             --run_name $MODEL_ALIAS+$TASK+${PROMPT} \
             --trust_remote_code \
             --output_path ${SAVE_PATH}data/eval_scores/ $OTHER_ARGS
+
     done
 done
+#pkill vllm
+#sleep 2m
