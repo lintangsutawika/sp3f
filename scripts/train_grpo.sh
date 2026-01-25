@@ -62,7 +62,7 @@ PPO_BS=8
 
 echo $RUN_NAME
 echo $FUNCTION_NAME
-python -m lang_boot.main_grpo \
+python -m sp3f.main_grpo \
     +trainer.lang_code=${LANGUAGE} \
     +trainer.task=${TASK} \
     +trainer.use_gcs=${USE_GCS} \
