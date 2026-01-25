@@ -48,11 +48,11 @@ torchrun \
         model.fsdp_config.model_dtype=bf16 \
         model.strategy=fsdp2 \
         trainer.default_local_dir=${FULL_SAVE_PATH}/checkpoints/ \
-        trainer.project_name='lbr-lang_boot' \
+        trainer.project_name='sp3f' \
         trainer.experiment_name=${RUN_NAME} \
         trainer.n_gpus_per_node=${NUM_GPUS} \
-        trainer.save_freq=1000 \
-        trainer.total_epochs=10 \
-        trainer.total_training_steps=5000 \
+        trainer.save_freq=500 \
+        trainer.total_epochs=1 \
+        trainer.total_training_steps=1000 \
         trainer.logger=['console','wandb'] \
         trainer.checkpoint.save_contents=['hf_model']
