@@ -117,7 +117,7 @@ python -m sp3f.main_grpo \
     actor_rollout_ref.ref.strategy=fsdp2 \
     trainer.critic_warmup=0 \
     trainer.logger=['console','wandb'] \
-    trainer.project_name='lbr-lang_boot' \
+    trainer.project_name='sp3f' \
     trainer.experiment_name=${RUN_NAME} \
     trainer.n_gpus_per_node=${NUM_GPUS} \
     trainer.nnodes=1 \
@@ -126,9 +126,9 @@ python -m sp3f.main_grpo \
     trainer.save_freq=250 \
     trainer.test_freq=500 \
     trainer.total_epochs=20 \
-    trainer.total_training_steps=2005 \
+    trainer.total_training_steps=505 \
     trainer.default_local_dir=${FULL_SAVE_PATH}/checkpoints/ \
     trainer.validation_data_dir=${FULL_SAVE_PATH}/evaluations/ \
-    custom_reward_function.path=lang_boot/lang_boot/reward_functions/${FUNCTION_PATH}.py \
+    custom_reward_function.path=sp3f/reward_functions/${FUNCTION_PATH}.py \
     custom_reward_function.name=${FUNCTION_NAME} \
     ${OTHER_ARGS}
