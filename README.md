@@ -52,7 +52,7 @@ SP3F consists of 2 stages, an initial SFT stage and a GRPO stage with privileged
 
 ### 1️⃣ SFT
 
-To start, we finetune a base model. This is to align the model with a starting distribution that mimics intended behaviours such as proper format and target language to some degree.
+To start, we'll finetune a base model using [scripts/train_sft.sh](scripts/train_sft.sh). This is to align the model with a starting distribution that mimics intended behaviours such as proper format and target language to some degree.
 
 ```
 MODEL=Qwen/Qwen2.5-7B
@@ -68,7 +68,7 @@ sbatch scripts/train_sft.sh \
 
 ### 2️⃣ GRPO with Privileged Information
 
-To train a model with SP3F, we use the following command. It is key to use a capable LLM-as-a-Judge. Our experiments use GPT-4o-Mini but other LLMs may work as well.
+Next, we train our SFT model with RL. It is key to use a capable LLM-as-a-Judge. Our experiments use GPT-4o-Mini but other LLMs may work as well. Specifically, we use [scripts/train_grpo.sh](scripts/train_grpo.sh)
 
 ```
 TASK=deepscaler_train
@@ -97,7 +97,7 @@ sbatch scripts/train_grpo.sh \
 To add more languages, you can use the our scripts to translate English data to your target language.
 #### Register a translation prompt. 
 
-Add a new class in `tasks/translate_prompt.py` this will look something like this. Register it using `<Language ID>_translate` format. We will use the language id to identify which prompt to use during translation.
+Add a new class in [tasks/translate_prompt.py](tasks/translate_prompt.py) this will look something like this. Register it using `<Language ID>_translate` format. We will use the language id to identify which prompt to use during translation.
 
 ```
 @register_task("id_translate")
@@ -114,7 +114,7 @@ Respond directly after \"Indonesian Translation:\".\
 
 Setup your LLM which could be a locally hosted one or an API model and set their base_url and key in LLM_URL and LLM_KEY in `.env` the translation scripts will look for this file.
 
-To translate queries
+To translate queries, we use [scripts/reasoning_translate_queries.sh](scripts/reasoning_translate_queries.sh) with the following parameters:
 ```
 MODEL=azure/gpt-5-nano # We use GPT-5-Nano for our translation
 LANGUAGE=id # Language code 
@@ -128,7 +128,7 @@ bash scripts/reasoning_translate_queries.sh \
             -o "--n_samples ${MAX_SAMPLES}"
 ```
 
-To translate solutions
+And to translate solutions, we use [scripts/reasoning_translate_solutions.sh](scripts/reasoning_translate_solutions.sh).
 ```
 MODEL=azure/gpt-5-nano # We use GPT-5-Nano for our translation
 LANGUAGE=id # Language code 
@@ -144,9 +144,9 @@ bash scripts/reasoning_translate_solutions.sh \
 
 #### Construct Training Dataset
 
-With the translated queries and solutions we can construct the training data.
+With the translated queries and solutions we can [construct](src/construct_dataset.py) the training data.
 ```
-uv run --isolated construct_dataset.py \
+uv run --isolated src/construct_dataset.py \
         --data_path ${SAVE_PATH} \
         --output_path ${OUTPUT_PATH} \
         --lang ${LANGUAGE} \
@@ -167,7 +167,7 @@ To use your own data.
 
 ### 🔍 Evaluating models
 
-To evaluate trained or baseline models, we use the following scripts. Each run processes a single language for all 4 tasks, so we will need to iterate over all of the languages. Tip: We use SLURM which allows us to parallelize the evals for each language.
+To evaluate trained or baseline models, we use the [scripts/eval_task.sh](scripts/eval_task.sh). Each run processes a single language for all 4 tasks, so we will need to iterate over all of the languages. Tip: We use SLURM which allows us to parallelize the evals for each language.
 
 ```
 # Path to a local model HF checkpoint. HF model names such as Qwen/Qwen2.5-7B also work.
@@ -185,7 +185,7 @@ do
 done
 ```
 
-Specifically for `MT MATH 100` in Chinese (zh). The dataset features distinct Mainland Chinese (cn) and Taiwanese Chinese (tw). We report the averaged score over these runs in our paper. To evaluate them, use a specific script
+Specifically for `MT MATH 100` in Chinese (zh). The dataset features distinct Mainland Chinese (cn) and Taiwanese Chinese (tw). We report the averaged score over these runs in our paper. To evaluate them, use [scripts/eval_task_math100_zh.sh](scripts/eval_task_math100_zh.sh)
 ```
 # Path to a local model HF checkpoint. HF model names such as Qwen/Qwen2.5-7B also work.
 MODEL_PATH=...
