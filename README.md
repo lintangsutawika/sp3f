@@ -18,7 +18,7 @@ enhancing multilingual reasoning without any data in the target language(s). Fir
 We apply SP3F on data from 18 languages and find that RLMs trained via SP3F outperform fully post-trained models such as Qwen2.5-7B-Instruct on both in-domain math and out-of-domain non-math tasks in a target language while using 1/8th as much training data. We also find particularly large improvements on lower-resourced languages and see better generalization to unseen languages. Our experiments show that privileged information is particularly helpful in improving detection of correct reasoning chains, even if the final answer is incorrect.
 
 
-[![arXiv](https://img.shields.io/badge/arXiv-2506.05294-df2a2a.svg?style=for-the-badge&logo=arxiv)]()
+[![arXiv](https://img.shields.io/badge/arXiv-2601.18722-df2a2a.svg?style=for-the-badge&logo=arxiv)](https://arxiv.org/abs/2601.18722)
 [![HF Collection](https://img.shields.io/badge/%F0%9F%A4%97-Datasets-yellow?style=for-the-badge)](https://huggingface.co/collections/neulab/sp3f)
 [![License](https://img.shields.io/github/license/TRI-ML/prismatic-vlms?style=for-the-badge)](LICENSE)
 [![Summary](https://img.shields.io/badge/ -Summary-1DA1F2?logo=x&logoColor=white&labelColor=gray&style=for-the-badge)]()
@@ -209,6 +209,15 @@ The output eval will be an `output.jsonl` with the following fields:
 
 If you found this work useful, please cite us by using the following bibtex
 ```
+@misc{sutawika2026gainedtranslationprivilegedpairwise,
+      title={Gained in Translation: Privileged Pairwise Judges Enhance Multilingual Reasoning}, 
+      author={Lintang Sutawika and Gokul Swamy and Zhiwei Steven Wu and Graham Neubig},
+      year={2026},
+      eprint={2601.18722},
+      archivePrefix={arXiv},
+      primaryClass={cs.CL},
+      url={https://arxiv.org/abs/2601.18722}, 
+}
 ```
 
 ## 🎉 Acknowlegedments
